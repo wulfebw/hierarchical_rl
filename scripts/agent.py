@@ -136,36 +136,15 @@ class QLearningAgent(Agent):
 
     def start_episode(self, state):
         self.prev_state = state
-        self.prev_action = random.choice(self.actions)
+        self.prev_action = self.get_action(state)
 
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
     def finish_episode(self, next_state, reward):
         self.incorporate_feedback(self.prev_state, self.prev_action, 0, None)
+        self.logger.finish_episode()
 
     def finish_epoch(self, epoch):
         self.logger.log_epoch(epoch)
 
-class NeuralAgent(Agent):
-
-    def __init__(self):
-        pass
-
-    def step(self, next_state, reward):
-        pass
-
-    def choose_action(self):
-        pass
-
-    def train(self):
-        pass
-
-    def start_episode(self):
-        pass
-
-    def finish_episode(self):
-        pass
-
-    def finish_epoch(self, epoch):
-        self.logger.log_epoch(epoch)

@@ -26,6 +26,7 @@ class Logger(object):
         self.agent_name = agent_name
         self.actions = []
         self.rewards = []
+        self.episode_rewards = []
         self.losses = []
         self.states = []
         self.weights = None
@@ -57,9 +58,13 @@ class Logger(object):
             self.create_log_dir()
 
         self.record_stat('actions', self.actions, epoch)
-        self.record_stat('rewards', self.rewards, epoch)
+        self.record_stat('rewards', self.episode_rewards, epoch)
         self.record_stat('losses', self.losses, epoch)
         self.record_weights(self.weights, epoch)
+
+    def finish_episode(self):
+        self.episode_rewards.append(np.sum(self.rewards))
+        self.rewards = []
 
     def record_stat(self, name, values, epoch):
         self.save_stat(name, values, epoch)
@@ -73,7 +78,7 @@ class Logger(object):
     def plot_stat(self, name, values, epoch):
         filename = '{}_graph.png'.format(name)
         filepath = os.path.join(self.log_dir, filename)
-        avg = moving_average(values, 200)
+        avg = moving_average(values, 300)
         plt.figure()
         plt.plot(avg)
         plt.savefig(filepath)
@@ -89,3 +94,29 @@ class Logger(object):
         dir_path = os.path.join(LOGGING_DIRECTORY, dir_name)
         os.mkdir(dir_path)
         self.log_dir = dir_path
+
+class NeuralLogger(Logger):
+
+    def __init__(self, agent_name, logging=True):
+        super(NeuralLogger, self).__init__(agent_name, logging)
+
+    def log_epoch(self, epoch, network):
+        if not self.logging:
+            return
+
+        if self.log_dir is None:
+            self.create_log_dir()
+
+        self.record_stat('actions', self.actions, epoch)
+        self.record_stat('rewards', self.episode_rewards, epoch)
+        # self.record_stat('losses', self.losses, epoch)
+        self.record_weights(epoch, network)
+
+    def record_weights(self, epoch, network):
+        filename = 'network_file_epoch_{}'.format(epoch)
+        filepath = os.path.join(self.log_dir, filename)
+        network.save_weights(filepath)
+
+
+
+
