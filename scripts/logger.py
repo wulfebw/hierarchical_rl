@@ -1,5 +1,6 @@
 
 import datetime
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle
@@ -7,6 +8,14 @@ import sys
 
 LOGGING_DIRECTORY = '../logs'
 MAXIMUM_WEIGHT_MAGNITUDE = 1000
+
+def moving_average(values, window_size):
+    if len(values) == 0:
+        print 'the list given to moving average cannot be empty but is'
+        return []
+    else:
+        window = np.ones(int(window_size))/float(window_size)
+        return np.convolve(values, window, 'same')
 
 class Logger(object):
     """
@@ -53,9 +62,21 @@ class Logger(object):
         self.record_weights(self.weights, epoch)
 
     def record_stat(self, name, values, epoch):
-        filename = '{}_epoch_{}'.format(name, epoch)
+        self.save_stat(name, values, epoch)
+        self.plot_stat(name, values, epoch)
+
+    def save_stat(self, name, values, epoch):
+        filename = '{}'.format(name)
         filepath = os.path.join(self.log_dir, filename)
         np.savez(filepath, values=values)
+
+    def plot_stat(self, name, values, epoch):
+        filename = '{}_graph.png'.format(name)
+        filepath = os.path.join(self.log_dir, filename)
+        avg = moving_average(values, 200)
+        plt.figure()
+        plt.plot(avg)
+        plt.savefig(filepath)
 
     def record_weights(self, weights, epoch):
         filename = 'weights_epoch_{}.pkl'.format(epoch)
@@ -64,7 +85,6 @@ class Logger(object):
             pickle.dump(weights, f, pickle.HIGHEST_PROTOCOL)
 
     def create_log_dir(self):
-        # would be nice to include 'validation' accuracy in the name
         dir_name = '{}_{}'.format(self.agent_name, datetime.datetime.now().isoformat())
         dir_path = os.path.join(LOGGING_DIRECTORY, dir_name)
         os.mkdir(dir_path)
