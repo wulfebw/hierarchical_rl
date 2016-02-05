@@ -69,8 +69,8 @@ class TestExperimentMazeSolving(TestExperiment):
         run_tests = False
         e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests)
         e.run()
-        max_reward = np.max(e.agent.logger.rewards)
-        self.assertEquals(max_reward, mdp.EXIT_REWARD)
+        total_len = len(e.agent.logger.actions)
+        self.assertTrue(total_len < max_steps * epoch_length * num_epochs)
 
     def test_run_with_small_maze_mdp_q_learning_agent_correct_V(self):
         mdp = mdps.MazeMDP(5, 1)
@@ -111,7 +111,7 @@ class TestExperimentMazeSolving(TestExperiment):
         discount = mdp.get_discount()
         exploration_prob = .5
         step_size = 1
-        a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=True)
+        a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
         num_epochs = 10
         epoch_length = 100
         test_epoch_length = 0
