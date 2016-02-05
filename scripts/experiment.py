@@ -44,14 +44,14 @@ class Experiment(object):
         :description: main method which runs the entire experiment
         """
         for epoch in xrange(self.num_epochs):
-            self.run_epoch(self.epoch_length)
+            self.run_epoch(epoch, self.epoch_length)
 
             if self.run_tests:
                 self.agent.start_testing()
                 self.run_epoch(self.test_epoch_length)
                 self.agent.finish_testing(epoch)
 
-    def run_epoch(self, epoch_length):
+    def run_epoch(self, epoch, epoch_length):
         """
         :description: runs a single epoch
 
@@ -60,6 +60,8 @@ class Experiment(object):
         """
         for episode in xrange(epoch_length):
             self.run_episode()
+
+        self.agent.finish_epoch(epoch)
 
     def run_episode(self):
         """
@@ -74,11 +76,13 @@ class Experiment(object):
 
             # if episode has ended, then break
             if terminal:
-                self.agent.end_episode(next_state, reward)
                 break
 
             # otherwise, inform the agent and get a new action
             action = self.agent.step(next_state, reward)
+            state = next_state
+
+        self.agent.finish_episode(next_state, reward)
 
     def step(self, state, action):
         """
@@ -107,4 +111,6 @@ class Experiment(object):
         for i, prob in enumerate(probs):
             accum += prob
             if accum >= target: return i
-        raise ValueError('Invalid probabilities provided to sample()')
+        raise ValueError('Invalid probabilities provided to sample method in experiment')
+
+
