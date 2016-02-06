@@ -63,7 +63,9 @@ class QNetworkAgent(agent.Agent):
 
         y = self.network.predict(states, batch_size=self.batch_size)
         y[np.arange(self.batch_size), actions] = targets
-        self.network.fit(states, y, batch_size=self.batch_size, nb_epoch=1, verbose=1)
+        history = self.network.fit(states, y, batch_size=self.batch_size, nb_epoch=1, verbose=0)
+
+        self.logger.log_loss(history.totals['loss'])
 
     def get_action(self, state):
         if random.random() < self.exploration_prob:
@@ -115,7 +117,7 @@ class QNetworkAgent(agent.Agent):
     def convert_state_to_batch(self, state):
         return state.reshape(1,-1)
 
-def build_fully_connected_network(input_shape, output_units, hidden_layer_size=10,
+def build_fully_connected_network(input_shape, output_units, hidden_layer_size=5,
             learning_rate=1e-3, target=False, weight_init='he_normal', 
             activation='relu'):
     trainable = True

@@ -109,14 +109,12 @@ class NeuralLogger(Logger):
 
         self.record_stat('actions', self.actions, epoch)
         self.record_stat('rewards', self.episode_rewards, epoch)
-        # self.record_stat('losses', self.losses, epoch)
+        self.record_stat('losses', self.losses, epoch)
         self.record_weights(epoch, network)
 
     def record_weights(self, epoch, network):
         filename = 'network_file_epoch_{}.save'.format(epoch)
         filepath = os.path.join(self.log_dir, filename)
         network.save_weights(filepath)
-
-
 
 
