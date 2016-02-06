@@ -138,6 +138,9 @@ class MazeMDP(MDP):
     def get_discount(self):
         return 1
 
+    def get_mean_state_values(self):
+        return np.repeat(self.max_position / 2., 2)
+
     def calculate_next_state(self, state, action):
         next_state = (state[0] + action[0], state[1] + action[1])
         return next_state
@@ -221,6 +224,21 @@ class MazeMDP(MDP):
                 if (ridx, cidx) in V:
                     print round(V[(ridx, cidx)], 1),
             print('\n')
+
+    def get_value_string(self, V):
+        value_string = []
+        for ridx in reversed(range(self.max_position + 1)):
+            for cidx in range(self.max_position + 1):
+                if (ridx, cidx) in V:
+                    if (ridx, cidx) == self.get_start_state():
+                        value_string.append('S ')
+                    elif (ridx, cidx) == self.end_state:
+                        value_string.append('E ')
+                    else:
+                        value_string.append(round(V[(ridx, cidx)], 1))
+                    value_string.append(' ')
+            value_string.append('\n')
+        return ''.join([str(v) for v in value_string])
 
     def print_maze(self, coordinates):
         for row in range(self.room_size):

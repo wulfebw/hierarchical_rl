@@ -13,9 +13,12 @@ def moving_average(values, window_size):
     if len(values) == 0:
         print 'the list given to moving average cannot be empty but is'
         return []
-    else:
-        window = np.ones(int(window_size))/float(window_size)
-        return np.convolve(values, window, 'same')
+
+
+    window = np.ones(int(window_size))/float(window_size)
+    values = np.hstack((np.repeat(values[0], int(window_size)), values, np.repeat(values[-1], int(window_size))))
+    average = np.convolve(values, window, 'same').tolist()
+    return average[window_size:-window_size]
 
 class Logger(object):
     """
@@ -78,9 +81,8 @@ class Logger(object):
     def plot_stat(self, name, values, epoch):
         filename = '{}_graph.png'.format(name)
         filepath = os.path.join(self.log_dir, filename)
-        avg = moving_average(values, 300)
         plt.figure()
-        plt.plot(avg)
+        plt.scatter(np.arange(len(values)), values)
         plt.savefig(filepath)
 
     def record_weights(self, weights, epoch):
@@ -94,6 +96,15 @@ class Logger(object):
         dir_path = os.path.join(LOGGING_DIRECTORY, dir_name)
         os.mkdir(dir_path)
         self.log_dir = dir_path
+
+    def log_value_string(self, value_string):
+        if self.log_dir is None:
+            self.create_log_dir()
+
+        filename = 'value_image.txt'
+        filepath = os.path.join(self.log_dir, filename)
+        with open(filepath, 'wb') as f:
+            f.write(value_string)
 
 class NeuralLogger(Logger):
 
@@ -116,5 +127,3 @@ class NeuralLogger(Logger):
         filename = 'network_file_epoch_{}.save'.format(epoch)
         filepath = os.path.join(self.log_dir, filename)
         network.save_weights(filepath)
-
-

@@ -17,7 +17,7 @@ class QNetworkAgent(agent.Agent):
 
     def __init__(self, num_actions, input_shape, discount, exploration_prob, step_size, 
         frozen_update_period, replay_memory_capacity, batch_size, exploration_prob_reduction_steps, 
-        min_exploration_prob, logging=True):
+        min_exploration_prob, mean_state_values, logging=True):
         self.actions = range(num_actions)
         self.discount = discount
         self.exploration_prob = exploration_prob
@@ -30,13 +30,15 @@ class QNetworkAgent(agent.Agent):
         self.frozen_update_period = frozen_update_period
         self.replay_memory_capacity = replay_memory_capacity
         self.batch_size = batch_size
+        self.mean_state_values = mean_state_values
         self.replay_memory = replay_memory.ReplayMemory()
 
-        input_shape = (batch_size,) + input_shape
-        self.network = build_fully_connected_network(input_shape=input_shape, output_units=num_actions)
-        self.target_network = build_fully_connected_network(input_shape=input_shape, output_units=num_actions, target=True)
+        batch_shape = (batch_size,) + input_shape
+        self.network = build_fully_connected_network(input_shape=batch_shape, output_units=num_actions)
+        self.target_network = build_fully_connected_network(input_shape=batch_shape, output_units=num_actions, target=True)
 
         self.logger = logger.NeuralLogger(agent_name='QNetworkAgent', logging=logging)
+        
 
     def step(self, next_state, reward):
         next_state = self.convert_state_to_internal_format(next_state)
@@ -112,10 +114,16 @@ class QNetworkAgent(agent.Agent):
         self.logger.log_epoch(epoch, self.network)
 
     def convert_state_to_internal_format(self, state):
-        return np.array(state)
+        return np.array(state) - self.mean_state_values
 
     def convert_state_to_batch(self, state):
         return state.reshape(1,-1)
+
+    def get_qvalues(self, state):
+        state = self.convert_state_to_internal_format(state)
+        state = self.convert_state_to_batch(state)
+        q_values = self.network.predict(state, batch_size=1)
+        return q_values
 
 def build_fully_connected_network(input_shape, output_units, hidden_layer_size=5,
             learning_rate=1e-3, target=False, weight_init='he_normal', 

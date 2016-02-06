@@ -29,6 +29,12 @@ class Agent(object):
         """
         raise NotImplementedError("Override me")
 
+    def start_testing(self):
+        pass
+
+    def finish_testing(self):
+        pass
+
 
 class TestAgent(Agent):
 
@@ -147,4 +153,3 @@ class QLearningAgent(Agent):
 
     def finish_epoch(self, epoch):
         self.logger.log_epoch(epoch)
-
