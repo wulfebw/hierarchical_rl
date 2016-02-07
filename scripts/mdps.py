@@ -1,11 +1,12 @@
+"""
+:description: Markov Decision Process classes
+"""
 
 import collections
 import copy
 import numpy as np
 import random
 import sys
-
-###########################################################################
 
 class MDP(object):
 

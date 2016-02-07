@@ -7,7 +7,6 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'scripts')))
 
 import mdps
-import policy
 import qnetwork
 
 class TestQNetworkConstruction(unittest.TestCase):
@@ -17,14 +16,13 @@ class TestQNetworkConstruction(unittest.TestCase):
         batch_size = 100
         num_actions = 4
         num_hidden = 10
-        p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, 100000)
         discount = 1
         learning_rate = 1e-2 
         action_selection = 'epsilon_greedy'
         update_rule = 'sgd'
         freeze_interval = 1000
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, p, discount, learning_rate, update_rule, freeze_interval, rng)
+        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, update_rule, freeze_interval, rng)
 
 class TestQNetworkTrain(unittest.TestCase):
     pass

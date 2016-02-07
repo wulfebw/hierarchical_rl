@@ -5,8 +5,9 @@ import random
 DEFAULT_CAPACITY = 1000
 
 class ReplayMemory(object):
-    def __init__(self, capacity=DEFAULT_CAPACITY):
+    def __init__(self, batch_size, capacity=DEFAULT_CAPACITY):
         self.memory = {}
+        self.batch_size = batch_size
         self.first_index = -1
         self.last_index = -1
         self.capacity = capacity
@@ -37,12 +38,12 @@ class ReplayMemory(object):
         rand_sample_index = random.randint(self.first_index, self.last_index)
         return self.memory[rand_sample_index]
 
-    def sample_batch(self, batch_size):
+    def sample_batch(self):
         states = []
         actions = []
         rewards = []
         next_states = []
-        for idx in range(batch_size):
+        for idx in range(self.batch_size):
             state, action, reward, next_state = self.sample()
             states.append(state)
             actions.append(action)

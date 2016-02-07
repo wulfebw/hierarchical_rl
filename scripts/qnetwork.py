@@ -1,5 +1,4 @@
 
-
 import lasagne
 import learning_utils
 import numpy as np
@@ -8,12 +7,11 @@ import theano.tensor as T
 
 class QNetwork(object):
 
-    def __init__(self, input_shape, batch_size, num_actions, num_hidden, policy, discount, learning_rate, update_rule, freeze_interval, rng):
+    def __init__(self, input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, update_rule, freeze_interval, rng):
         self.input_shape = input_shape
         self.batch_size = batch_size
         self.num_actions = num_actions
         self.num_hidden = num_hidden
-        self.policy = policy
         self.discount = discount
         self.learning_rate = learning_rate
         self.update_rule = update_rule
@@ -23,13 +21,6 @@ class QNetwork(object):
 
     def train(self, states, actions, rewards, next_states):
         return 0
-
-    def get_action(self, state):
-        """
-        :description: returns the action to take given a state. This assumes epsilon greedy
-        """
-        q_values = get_q_values(state)
-        self.policy.choose_action(q_values)
 
     def get_q_values(self, state):
         states = np.zeros((self.batch_size, self.input_shape), dtype=theano.config.floatX)
@@ -45,9 +36,8 @@ class QNetwork(object):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
 
-
     ##########################################################################################
-    #### Initialization below this line
+    #### Network and Learning Initialization below
     ##########################################################################################
 
     def initialize_network(self):

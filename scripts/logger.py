@@ -2,7 +2,6 @@
 :description: These classes provide logging functionality for agents
 """
 
-
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np

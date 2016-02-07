@@ -113,6 +113,6 @@ class Experiment(object):
     def log_value_string(self):
         V = {}
         for state in self.mdp.states:
-            V[state] = np.max(self.agent.get_qvalues(state))
+            V[state] = np.max(self.agent.get_q_values(state))
         value_string = self.mdp.get_value_string(V)
         self.agent.logger.log_value_string(value_string)
