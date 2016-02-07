@@ -1,5 +1,6 @@
 
 import lasagne
+from lasagne.layers.normalization import batch_norm
 import learning_utils
 import numpy as np
 import theano
@@ -18,14 +19,22 @@ class QNetwork(object):
         self.freeze_interval = freeze_interval
         self.rng = rng if rng else np.random.RandomState()
         self.initialize_network()
+        self.update_counter = 0
 
-    def train(self, states, actions, rewards, next_states, terminal):
+    def train(self, states, actions, rewards, next_states, terminals):
+
+        if self.update_counter % self.freeze_interval == 0:
+            self.reset_target_network()
+        self.update_counter += 1
+
         self.states_shared.set_value(states)
-        self.next_states_shared.set_value(next_states)
-        self.actions_shared.set_value(actions)
+        self.actions_shared.set_value(actions.astype('int32'))
         self.rewards_shared.set_value(rewards)
-        self.terminals_shared.set_value(terminals)
-        return 0
+        self.next_states_shared.set_value(next_states)
+        self.terminals_shared.set_value(terminals.astype('int32'))
+
+        loss, q_values = self._train()
+        return loss
 
     def get_q_values(self, state):
         states = np.zeros((self.batch_size, self.input_shape), dtype=theano.config.floatX)
@@ -145,12 +154,28 @@ class QNetwork(object):
             b=lasagne.init.Constant(.1)
         )
 
-        l_out = lasagne.layers.DenseLayer(
+        l_hidden3 = lasagne.layers.DenseLayer(
             l_hidden2,
+            num_units=self.num_hidden,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_hidden4 = lasagne.layers.DenseLayer(
+            l_hidden3,
+            num_units=self.num_hidden,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_out = lasagne.layers.DenseLayer(
+            l_hidden4,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
+            b=lasagne.init.Constant(0)
         )
 
         return l_out

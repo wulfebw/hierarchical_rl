@@ -1,5 +1,5 @@
-1. method for performing cross validation of hyperparameters
-2. lasagne for custom network
-3. compressor network
-4. recurrent network
-5. stacked recurrent network
+1 method for performing cross validation of hyperparameters
+2. compressor network
+3. recurrent network
+4. stacked recurrent network
+5. batchnorm

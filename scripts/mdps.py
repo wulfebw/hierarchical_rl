@@ -137,7 +137,7 @@ class MazeMDP(MDP):
         return (1,1)   
 
     def get_discount(self):
-        return 1
+        return 0.95
 
     def get_mean_state_values(self):
         return np.repeat(self.max_position / 2., 2)

@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-DEFAULT_CAPACITY = 1000
+DEFAULT_CAPACITY = 100000
 
 class ReplayMemory(object):
     def __init__(self, batch_size, capacity=DEFAULT_CAPACITY):
@@ -43,10 +43,17 @@ class ReplayMemory(object):
         actions = []
         rewards = []
         next_states = []
+        terminals = []
         for idx in range(self.batch_size):
-            state, action, reward, next_state = self.sample()
+            state, action, reward, next_state, terminal = self.sample()
             states.append(state)
             actions.append(action)
             rewards.append(reward)
             next_states.append(next_state)
-        return np.array(states), np.array(actions), np.array(rewards), np.array(next_states)
+            terminals.append(terminal)
+
+        return np.array(states).reshape(self.batch_size, -1),           \
+                np.array(actions).reshape(self.batch_size, -1),         \
+                np.array(rewards).reshape(self.batch_size, -1),         \
+                np.array(next_states).reshape(self.batch_size, -1),     \
+                np.array(terminals).reshape(self.batch_size, -1)

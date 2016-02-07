@@ -1,0 +1,14 @@
+---
+results
+---
+- this is a list of interesting observations made while training
+
+---
+sgd vs adam
+--- 
+- on a one room maze, sgd will fail to find the optimal policy whereas adam finds it quickly
+
+---
+small replay memory vs large replay memory
+---
+- on the small maze, if you try out a capacity=1000 vs capacity=100000 replay memory, it makes a huge difference

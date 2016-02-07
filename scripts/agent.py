@@ -167,6 +167,7 @@ class NeuralAgent(Agent):
         self.replay_memory = replay_memory
         self.mean_state_values = mean_state_values
         self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
+        self.logger.log_hyperparameters(network, policy, replay_memory)
 
         self.prev_state = None
         self.prev_action = None
@@ -188,7 +189,7 @@ class NeuralAgent(Agent):
         next_state = self.convert_state_to_internal_format(next_state)
 
         # store current (s,a,r,s') tuple
-        self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state))
+        self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state, 0))
 
         # perform training
         self.train()
@@ -211,10 +212,10 @@ class NeuralAgent(Agent):
         :description: collects a minibatch of experiences and passes them to the network to train
         """
         # collect minibatch
-        states, actions, rewards, next_states = self.replay_memory.sample_batch()
+        states, actions, rewards, next_states, terminals = self.replay_memory.sample_batch()
 
         # pass to network to perform training
-        loss = self.network.train(states, actions, rewards, next_states)
+        loss = self.network.train(states, actions, rewards, next_states, terminals)
         self.logger.log_loss(loss)
 
     def get_action(self, state):
@@ -238,13 +239,17 @@ class NeuralAgent(Agent):
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
-    def finish_episode(self, next_state, reward):
+    def finish_episode(self):
         """
         :description: perform tasks at the end of episode
         """
-        # todo: add a sample to replay memory
-        # next_state should be none
-        # when a minibatch is sampled, if next_state == None then set terminal to 1
+        # This is a terminal next_state, so set to None and then when passing to 
+        # network set terminal to 1 so that the network output for this next_state will 
+        # not be considered
+        reward = 0
+        next_state = np.zeros(self.prev_state.shape)
+        terminal = 1
+        self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state, terminal))
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):

@@ -2,6 +2,7 @@
 :description: These classes provide logging functionality for agents
 """
 
+import collections 
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +20,6 @@ def moving_average(values, window_size):
     if len(values) == 0:
         print 'the list given to moving average cannot be empty but is'
         return []
-
 
     window = np.ones(int(window_size))/float(window_size)
     values = np.hstack((np.repeat(values[0], int(window_size)), values, np.repeat(values[-1], int(window_size))))
@@ -45,6 +45,7 @@ class Logger(object):
         self.episode_rewards = []
         self.losses = []
         self.states = []
+        self.state_values = collections.defaultdict(lambda: [])
         self.weights = None
         self.log_dir = None
         self.logging = logging
@@ -123,6 +124,9 @@ class Logger(object):
         filepath = os.path.join(self.log_dir, filename)
         plt.figure()
         plt.scatter(np.arange(len(values)), values)
+        plt.plot(moving_average(values, 50), c='r')
+        plt.xlabel('Updates')
+        plt.ylabel(name)
         plt.savefig(filepath)
 
     def record_weights(self, weights, epoch):
@@ -154,6 +158,35 @@ class Logger(object):
         filepath = os.path.join(self.log_dir, filename)
         with open(filepath, 'wb') as f:
             f.write(value_string)
+
+    def log_values(self, V):
+        """
+        :description: keeps track of how the q_values change over time
+        """
+        mean_value = np.mean(V.values())
+        max_value = np.max(V.values())
+        min_value = np.min(V.values())
+        self.state_values['mean'].append(mean_value)
+        self.state_values['max'].append(max_value)
+        self.state_values['min'].append(min_value)
+            
+        self.plot_values()
+
+    def plot_values(self):
+        """
+        :description: plot mean, max, and min state values so far
+        """
+        filename = 'state_values_graph.png'
+        filepath = os.path.join(self.log_dir, filename)
+        plt.figure()
+        plt.xlabel('Updates')
+        plt.ylabel('V(s)')
+        count = 0
+        plt.scatter(np.arange(len(self.state_values['mean'])), self.state_values['mean'], c='b')
+        plt.scatter(np.arange(len(self.state_values['max'])), self.state_values['max'], c='r')
+        plt.scatter(np.arange(len(self.state_values['min'])), self.state_values['min'], c='g')
+        plt.savefig(filepath)
+
 
 class NeuralLogger(Logger):
     """
@@ -189,3 +222,25 @@ class NeuralLogger(Logger):
         filepath = os.path.join(self.log_dir, filename)
         params = network.get_params()
         # dump params to file
+
+    def log_hyperparameters(self, network, policy, replay_memory):
+        if self.log_dir is None:
+            self.create_log_dir()
+
+        filename = 'hyperparameters.txt'
+        filepath = os.path.join(self.log_dir, filename)
+        hyperparameters = {}
+        hyperparameters['batch_size'] = network.batch_size
+        hyperparameters['num_hidden'] = network.num_hidden
+        hyperparameters['discount'] = network.discount
+        hyperparameters['learning_rate'] = network.learning_rate
+        hyperparameters['update_rule'] = network.update_rule
+        hyperparameters['freeze_interval'] = network.freeze_interval
+        hyperparameters['replay_memory_capacity'] = replay_memory.capacity
+
+        with open(filepath, 'wb') as f:
+            for k, v in hyperparameters.iteritems():
+                f.write('{}: {}\n'.format(k, v))
+
+
+

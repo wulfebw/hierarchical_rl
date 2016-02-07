@@ -86,7 +86,7 @@ class Experiment(object):
             action = self.agent.step(next_state, reward)
             state = next_state
 
-        self.agent.finish_episode(next_state, reward)
+        self.agent.finish_episode()
 
     def step(self, state, action):
         """
@@ -116,3 +116,4 @@ class Experiment(object):
             V[state] = np.max(self.agent.get_q_values(state))
         value_string = self.mdp.get_value_string(V)
         self.agent.logger.log_value_string(value_string)
+        self.agent.logger.log_values(V)
