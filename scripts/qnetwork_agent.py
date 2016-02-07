@@ -32,14 +32,12 @@ class QNetworkAgent(agent.Agent):
         self.batch_size = batch_size
         self.mean_state_values = mean_state_values
         self.replay_memory = replay_memory.ReplayMemory()
+        self.logger = logger.NeuralLogger(agent_name='QNetworkAgent', logging=logging)
 
         batch_shape = (batch_size,) + input_shape
         self.network = build_fully_connected_network(input_shape=batch_shape, output_units=num_actions)
         self.target_network = build_fully_connected_network(input_shape=batch_shape, output_units=num_actions, target=True)
-
-        self.logger = logger.NeuralLogger(agent_name='QNetworkAgent', logging=logging)
         
-
     def step(self, next_state, reward):
         next_state = self.convert_state_to_internal_format(next_state)
 

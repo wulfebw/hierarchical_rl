@@ -211,13 +211,6 @@ class MazeMDP(MDP):
 
         return [(next_state, 1, reward)]
 
-    def normalize_state(self, state):
-        mean_subtracted_vars = []
-        for var in state:
-            mean_subtracted_vars.append(var - float(self.max_position) / 2)
-
-        return tuple(mean_subtracted_vars)
-
     def print_v(self, V):
         for ridx in reversed(range(self.max_position + 1)):
             for cidx in range(self.max_position + 1):

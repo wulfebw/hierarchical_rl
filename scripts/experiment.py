@@ -1,6 +1,6 @@
 
+import learning_utils
 import numpy as np
-import random
 
 class Experiment(object):
     """
@@ -101,21 +101,10 @@ class Experiment(object):
         if len(transitions) == 0:
             terminal = True
         else:
-            i = self.sample([prob for newState, prob, reward in transitions])
+            i = learning_utils.sample([prob for newState, prob, reward in transitions])
             next_state, prob, reward = transitions[i]
 
         return next_state, reward, terminal
-
-    def sample(self, probs):
-        """
-        :description: given a list of probabilities, randomly select an index into those probabilities
-        """
-        target = random.random()
-        accum = 0
-        for i, prob in enumerate(probs):
-            accum += prob
-            if accum >= target: return i
-        raise ValueError('Invalid probabilities provided to sample method in experiment')
 
     def finish_epoch(self, epoch):
         if self.value_logging:
