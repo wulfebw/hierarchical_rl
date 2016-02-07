@@ -33,7 +33,7 @@ class TestNeuralAgent(unittest.TestCase):
         test_epoch_length = 0
         max_steps = 10
         run_tests = False
-        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
+        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=False)
         e.run()
 
 if __name__ == '__main__':

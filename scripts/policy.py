@@ -18,7 +18,8 @@ class EpsilonGreedy(Policy):
         self.actions = range(num_actions)
         self.exploration_prob = exploration_prob
         self.min_exploration_prob = min_exploration_prob
-        self.exploration_reduction = (exploration_prob - min_exploration_prob) / actions_until_min
+        assert actions_until_min != 0, 'actions_until_min must be positive'
+        self.exploration_reduction = (exploration_prob - min_exploration_prob) / float(actions_until_min)
 
     def choose_action(self, q_values):
         self.update_parameters()
@@ -37,12 +38,14 @@ class Softmax(Policy):
         self.actions = range(num_actions)
         self.tau = float(tau)
         self.min_tau = min_tau
-        self.tau_reduction = (tau - min_tau) / actions_until_min
+        assert actions_until_min != 0, 'actions_until_min must be positive'
+        self.tau_reduction = (tau - min_tau) / float(actions_until_min)
 
     def choose_action(self, q_values):
-        exp_q_values = np.exp(q_values / self.tau)
+        self.update_parameters()
+        exp_q_values = np.exp(q_values / (self.tau + 1e-2))
         weights = dict()
-        for idx, val in enumerate(exp_q_vals):
+        for idx, val in enumerate(exp_q_values):
             weights[idx] = val
         action = learning_utils.weightedRandomChoice(weights)
         return action

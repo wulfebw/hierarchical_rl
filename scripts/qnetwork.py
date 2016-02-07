@@ -19,7 +19,12 @@ class QNetwork(object):
         self.rng = rng if rng else np.random.RandomState()
         self.initialize_network()
 
-    def train(self, states, actions, rewards, next_states):
+    def train(self, states, actions, rewards, next_states, terminal):
+        self.states_shared.set_value(states)
+        self.next_states_shared.set_value(next_states)
+        self.actions_shared.set_value(actions)
+        self.rewards_shared.set_value(rewards)
+        self.terminals_shared.set_value(terminals)
         return 0
 
     def get_q_values(self, state):
