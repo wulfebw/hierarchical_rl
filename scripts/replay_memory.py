@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-DEFAULT_CAPACITY = 100000
+DEFAULT_CAPACITY = 10000
 
 class ReplayMemory(object):
     def __init__(self, batch_size, capacity=DEFAULT_CAPACITY):

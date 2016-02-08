@@ -12,3 +12,33 @@ sgd vs adam
 small replay memory vs large replay memory
 ---
 - on the small maze, if you try out a capacity=1000 vs capacity=100000 replay memory, it makes a huge difference
+
+---
+numeric vs one-hot state representation
+---
+- numeric is much worse than one-hot, one-hot is rote learning however
+
+---
+5 vs 10 size single room
+---
+- how much more difficult is the 10 vs 5?
+
+---
+10 size room vs 5 size, 2 room maze
+---
+- how much more difficult do walls make the task?
+
+---
+conv vs dense one-hot representations
+---
+- how does passing the one-hot input as an array to conv compare in performance to the flattened array, dense version?
+
+---
+number of hidden units
+---
+- what impact does number of hidden units have?
+
+---
+prioritized experience replay vs none
+---
+- how much better does it do?

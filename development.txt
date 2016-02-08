@@ -1,5 +1,33 @@
 1 method for performing cross validation of hyperparameters
-2. compressor network
+2. compressor network (compression loss as incentive, as temp for softmax)
 3. recurrent network
 4. stacked recurrent network
 5. batchnorm
+6. prioritized experience replay
+
+---
+problems with qnet
+---
+1. values go to nan sometimes. why? (particularly with rmsprop, does so immediately -> why?)
+2. need regularization? [adding dropout does not eem to work]
+3. need to make tests checking outputs given set weights and inputs
+4. look at a trajectory and see how it's behaving -> does it follow the selected actions?
+5. maybe need to be taking random actions till replay memory full
+6. perhaps there's something wrong with the mdp state representation as input to the dqn?
+    - perhaps might help to add another 'frame' to the state?
+    - looks like having one-hot state vectors works
+    - what about passing it as a 2D, one-hot representation? -> use conv layers ***
+7. build the Q(s,a) maps (i.e., one for each action) and see if those make sense
+8. why will the network output th same Vopt value for all states after a certain point?
+    - this is pretty major
+
+---
+questions
+---
+- how should reward be reported? discounted or undiscounted?
+
+---
+major insight!!!
+---
+- in the maze problem, just show it the current room!!! and it has to figure out from that
+    - need some distinguishing markers for each room? that's available in MR, but not with one-hot room matrices

@@ -162,31 +162,45 @@ class TestQNetworkTrain(unittest.TestCase):
 class TestQNetworkFullOperation(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
-        room_size = 5
-        mdp = mdps.MazeMDP(room_size, 1)
-        mdp.compute_states()
-        mdp.EXIT_REWARD = 1
-        mdp.MOVE_REWARD = -0.1
-        discount = mdp.get_discount()
-        num_actions = len(mdp.get_actions(None))
-        mean_state_values = mdp.get_mean_state_values()
-        batch_size = 100
-        network = qnetwork.QNetwork(input_shape=2, batch_size=batch_size, num_actions=4, num_hidden=10, discount=discount, learning_rate=1e-3, update_rule='adam', freeze_interval=1000, rng=None)
-        p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, 10000)
-        rm = replay_memory.ReplayMemory(batch_size)
-        a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
-                mean_state_values=mean_state_values, logging=True)
-        num_epochs = 160
-        epoch_length = 5
-        test_epoch_length = 0
-        max_steps = 100
-        run_tests = False
-        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
-        e.run()
+
+        def run(learning_rate, freeze_interval, num_hidden, epsilon_decay):
+            room_size = 10
+            num_rooms = 1
+            mdp = mdps.MazeMDP(room_size, num_rooms)
+            mdp.compute_states()
+            mdp.EXIT_REWARD = 1
+            mdp.MOVE_REWARD = 0
+            discount = mdp.get_discount()
+            num_actions = len(mdp.get_actions(None))
+            mean_state_values = mdp.get_mean_state_values()
+            batch_size = 50
+            network = qnetwork.QNetwork(input_shape=100, batch_size=batch_size, num_actions=4, num_hidden=num_hidden,
+                discount=discount, learning_rate=learning_rate, update_rule='adam', freeze_interval=freeze_interval
+                , rng=None)
+            p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
+            rm = replay_memory.ReplayMemory(batch_size)
+            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
+                    mean_state_values=mean_state_values, logging=True)
+            num_epochs = 5
+            epoch_length = 30
+            test_epoch_length = 0
+            max_steps = 200
+            run_tests = False
+            e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
+            e.run()
+
+        for idx in range(10):
+            lr = np.random.uniform(1e-5, 1e-2)
+            fi = int(np.random.uniform(1e2, 1e4))
+            nh = int(np.random.uniform(10, 100))
+            ed = int(np.random.uniform(1e2, 1e5))
+            print 'run number: {}'.format(idx)
+            print lr, fi, nh, ed
+            run(lr, fi, nh, ed)
 
         states = []
-        for ridx in range(room_size):
-            for cidx in range(room_size):
+        for ridx in range(5):
+            for cidx in range(5):
                 states.append(np.array((ridx, cidx)))
 
         for state in states:

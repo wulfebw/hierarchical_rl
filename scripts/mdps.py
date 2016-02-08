@@ -131,7 +131,7 @@ class MazeMDP(MDP):
         return (1,0)
 
     def get_actions(self, state=None):
-        return [(1,0),(-1,0),(0,1),(0,-1)]
+        return [(1,0),(0,1),(-1,0),(0,-1)]
 
     def get_start_state(self):
         return (1,1)   
@@ -225,11 +225,11 @@ class MazeMDP(MDP):
             for cidx in range(self.max_position + 1):
                 if (ridx, cidx) in V:
                     if (ridx, cidx) == self.get_start_state():
-                        value_string.append('S ')
+                        value_string.append('S  ')
                     elif (ridx, cidx) == self.end_state:
-                        value_string.append('E ')
+                        value_string.append('E  ')
                     else:
-                        value_string.append(round(V[(ridx, cidx)], 1))
+                        value_string.append(round(V[(ridx, cidx)], 2))
                     value_string.append(' ')
             value_string.append('\n')
         return ''.join([str(v) for v in value_string])

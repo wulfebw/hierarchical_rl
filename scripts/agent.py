@@ -211,6 +211,10 @@ class NeuralAgent(Agent):
         """
         :description: collects a minibatch of experiences and passes them to the network to train
         """
+        # # wait until replay memory full to do training
+        # if not self.replay_memory.isFull():
+        #     return
+
         # collect minibatch
         states, actions, rewards, next_states, terminals = self.replay_memory.sample_batch()
 
@@ -271,4 +275,8 @@ class NeuralAgent(Agent):
         :description: converts a state from an extenarl format to an internal one
         """
         # converts it to an array and zero-centers its values
-        return np.array(state) - self.mean_state_values
+        #return np.array(state) - self.mean_state_values
+        formatted_state = np.zeros((10,10))
+        formatted_state[state[0],state[1]] = 1
+        formatted_state = formatted_state.flatten()
+        return formatted_state
