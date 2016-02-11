@@ -19,7 +19,7 @@ class Agent(object):
         """
         raise NotImplementedError("Override me")
 
-    def finish_episode(self, next_state, reward):
+    def finish_episode(self):
         """
         :description: finalizes an episode for an agent
         """
@@ -52,7 +52,7 @@ class TestAgent(Agent):
         self.episodes += 1
         return random.choice(self.actions)
 
-    def finish_episode(self, next_state, reward):
+    def finish_episode(self):
         pass
 
     def finish_epoch(self, epoch):
@@ -149,7 +149,7 @@ class QLearningAgent(Agent):
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
-    def finish_episode(self, next_state, reward):
+    def finish_episode(self):
         self.incorporate_feedback(self.prev_state, self.prev_action, 0, None)
         self.logger.finish_episode()
 
@@ -211,9 +211,9 @@ class NeuralAgent(Agent):
         """
         :description: collects a minibatch of experiences and passes them to the network to train
         """
-        # # wait until replay memory full to do training
-        # if not self.replay_memory.isFull():
-        #     return
+        # wait until replay memory has samples
+        if self.replay_memory.isEmpty():
+            return
 
         # collect minibatch
         states, actions, rewards, next_states, terminals = self.replay_memory.sample_batch()
@@ -276,7 +276,7 @@ class NeuralAgent(Agent):
         """
         # converts it to an array and zero-centers its values
         #return np.array(state) - self.mean_state_values
-        formatted_state = np.zeros((10,10))
-        formatted_state[state[0],state[1]] = 1
-        formatted_state = formatted_state.flatten()
+        formatted_state = np.zeros((1,10,10))
+        formatted_state[0, state[0], state[1]] = 1
+        #formatted_state = formatted_state.flatten()
         return formatted_state

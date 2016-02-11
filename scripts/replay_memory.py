@@ -2,7 +2,7 @@
 import numpy as np
 import random
 
-DEFAULT_CAPACITY = 10000
+DEFAULT_CAPACITY = 100000
 
 class ReplayMemory(object):
     def __init__(self, batch_size, capacity=DEFAULT_CAPACITY):
@@ -23,6 +23,9 @@ class ReplayMemory(object):
     def isFull(self):
         return self.last_index + 1 - self.first_index >= self.capacity
 
+    def isEmpty(self):
+        return self.first_index == -1
+
     def discardSample(self):
         rand_index = random.randint(self.first_index, self.last_index)
         first_tuple = self.memory[self.first_index]
@@ -33,27 +36,33 @@ class ReplayMemory(object):
         self.first_index += 1
 
     def sample(self):
-        if self.first_index == -1:
-            return
+        if self.isEmpty():
+            raise Exception('Unable to sample from replay memory when empty')
         rand_sample_index = random.randint(self.first_index, self.last_index)
         return self.memory[rand_sample_index]
 
     def sample_batch(self):
-        states = []
-        actions = []
-        rewards = []
-        next_states = []
-        terminals = []
+        # must insert data into replay memory before sampling
+        if self.isEmpty():
+            raise Exception('Unable to sample from replay memory when empty')
+
+        # determine shape of states
+        state_shape = np.shape(self.memory.values()[0][0])
+        states_shape = (self.batch_size,) + state_shape
+
+        states = np.empty(states_shape)
+        actions = np.empty((self.batch_size, 1))
+        rewards = np.empty((self.batch_size, 1))
+        next_states = np.empty(states_shape)
+        terminals = np.empty((self.batch_size, 1))
+
+        # sample batch_size times from the memory
         for idx in range(self.batch_size):
             state, action, reward, next_state, terminal = self.sample()
-            states.append(state)
-            actions.append(action)
-            rewards.append(reward)
-            next_states.append(next_state)
-            terminals.append(terminal)
+            states[idx] = state
+            actions[idx] = action
+            rewards[idx] = reward
+            next_states[idx] = next_state
+            terminals[idx] = terminal
 
-        return np.array(states).reshape(self.batch_size, -1),           \
-                np.array(actions).reshape(self.batch_size, -1),         \
-                np.array(rewards).reshape(self.batch_size, -1),         \
-                np.array(next_states).reshape(self.batch_size, -1),     \
-                np.array(terminals).reshape(self.batch_size, -1)
+        return states, actions, rewards, next_states, terminals

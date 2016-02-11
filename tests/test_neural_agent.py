@@ -13,6 +13,7 @@ import policy
 import qnetwork
 import replay_memory
 
+@unittest.skipIf(__name__ != '__main__', "this test class does not run unless this file is called directly")
 class TestNeuralAgent(unittest.TestCase):
 
     def test_agent(self):

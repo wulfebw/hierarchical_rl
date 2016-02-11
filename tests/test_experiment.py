@@ -78,14 +78,14 @@ class TestExperimentMazeSolving(TestExperiment):
         mdp.EXIT_REWARD = 1
         mdp.MOVE_REWARD = -0.1
         num_actions = len(mdp.get_actions(None))
-        discount = mdp.get_discount()
-        exploration_prob = .5
-        step_size = 5e-1
+        discount = 1
+        exploration_prob = .7
+        step_size = 2e-1
         a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
-        num_epochs = 10
-        epoch_length = 300
+        num_epochs = 20
+        epoch_length = 100
         test_epoch_length = 0
-        max_steps = 1000
+        max_steps = 100
         run_tests = False
         e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests)
         e.run()
@@ -97,7 +97,7 @@ class TestExperimentMazeSolving(TestExperiment):
                     (0,3):0.8, (1,3):0.9, (2,3):1.0, (3,3):0.0, (4,3):1.0,
                     (0,4):0.7, (1,4):0.8, (2,4):0.9, (3,4):1.0, (4,4):0.9}
 
-        max_diff = 1e-2
+        max_diff = 1e-1
         for k in expected.keys():
             self.assertTrue(k in V)
             self.assertTrue(np.abs(V[k] - expected[k]) < max_diff)
