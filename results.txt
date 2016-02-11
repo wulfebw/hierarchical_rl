@@ -37,8 +37,19 @@ conv vs dense one-hot representations
 number of hidden units
 ---
 - what impact does number of hidden units have?
+- seems that lower number of units tends to get stuck in local optima that is relatively poor compared to the larger networks (both should be more than sufficient to express value function?)
 
 ---
 prioritized experience replay vs none
 ---
 - how much better does it do?
+
+---
+increasing batch size increases stability
+---
+- increasing the batch size improves learning
+
+---
+should you regularize q network?
+---
+- ? i'm not really sure at all

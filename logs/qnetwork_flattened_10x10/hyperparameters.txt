@@ -1,0 +1,9 @@
+freeze_interval: 3213
+num_hidden: 20
+learning_rate: 0.000389083973667
+batch_size: 50
+update_rule: adam
+discount: 0.95
+replay_memory_capacity: 10000
+
+- this was for 10x10 maze no walls

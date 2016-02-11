@@ -166,40 +166,39 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
 
-        def run(learning_rate, freeze_interval, num_hidden, epsilon_decay):
-            room_size = 5
-            num_rooms = 1
+        def run(learning_rate, freeze_interval, num_hidden, reg):
+            room_size = 3
+            num_rooms = 3
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
             mdp.MOVE_REWARD = 0
-            discount = mdp.get_discount()
+            discount = .95
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
-            batch_size = 50
-            network = qnetwork.QNetwork(input_shape=5*5, batch_size=batch_size, num_actions=4, num_hidden=num_hidden,
-                discount=discount, learning_rate=learning_rate, update_rule='adam', freeze_interval=freeze_interval
-                , rng=None)
+            batch_size = 100
+            network = qnetwork.QNetwork(input_shape=9*9, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            num_epochs = 10
+            epoch_length = 100
+            test_epoch_length = 0
+            max_steps = 90
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size)
             a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
                     mean_state_values=mean_state_values, logging=True)
-            num_epochs = 5
-            epoch_length = 30
-            test_epoch_length = 0
-            max_steps = 200
             run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(10):
-            lr = np.random.uniform(1e-5, 1e-2)
-            fi = int(np.random.uniform(1e2, 1e4))
-            nh = int(np.random.uniform(10, 100))
-            ed = int(np.random.uniform(1e2, 1e5))
+        for idx in range(5):
+            lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
+            fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
+            nh = 32 #int(np.random.uniform(8, 32)) # num hidden
+            reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
             print 'run number: {}'.format(idx)
-            print lr, fi, nh, ed
-            run(lr, fi, nh, ed)
+            print lr, fi, nh, reg
+            run(lr, fi, nh, reg)
 
         states = []
         for ridx in range(5):
@@ -215,40 +214,40 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
 
-        def run(learning_rate, freeze_interval, num_hidden, epsilon_decay):
-            room_size = 10
-            num_rooms = 1
+        def run(learning_rate, freeze_interval, num_hidden, reg):
+            room_size = 3
+            num_rooms = 3
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
             mdp.MOVE_REWARD = 0
-            discount = 1
+            discount = .95
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
-            batch_size = 20
-            network = qnetwork.ConvQNetwork(input_shape=(10,10), batch_size=batch_size, num_actions=4, num_hidden=num_hidden,
-                discount=discount, learning_rate=learning_rate, update_rule='adam', freeze_interval=freeze_interval
-                , rng=None)
+            batch_size = 50
+            network = qnetwork.ConvQNetwork(input_shape=(9,9), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            
+            num_epochs = 10
+            epoch_length = 50
+            test_epoch_length = 0
+            max_steps = 81
+            run_tests = False
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size)
             a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
                     mean_state_values=mean_state_values, logging=True)
-            num_epochs = 50
-            epoch_length = 5
-            test_epoch_length = 0
-            max_steps = 100
-            run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(10):
-            lr = np.random.uniform(1e-5, 1e-2)
-            fi = int(np.random.uniform(1e2, 1e4))
-            nh = int(np.random.uniform(16, 32))
-            ed = int(np.random.uniform(1e2, 1e5))
+        for idx in range(25):
+            lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
+            fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
+            nh = 32 #int(np.random.uniform(8, 32)) # num hidden
+            reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
             print 'run number: {}'.format(idx)
-            print lr, fi, nh, ed
-            run(lr, fi, nh, ed)
+            print lr, fi, nh, reg
+            run(lr, fi, nh, reg)
 
         states = []
         for ridx in range(5):

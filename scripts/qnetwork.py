@@ -1,6 +1,7 @@
 
 import lasagne
 from lasagne.layers.normalization import batch_norm
+from lasagne.regularization import regularize_network_params, l2
 import learning_utils
 import numpy as np
 import theano
@@ -8,13 +9,14 @@ import theano.tensor as T
 
 class QNetwork(object):
 
-    def __init__(self, input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, update_rule, freeze_interval, rng):
+    def __init__(self, input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng):
         self.input_shape = input_shape
         self.batch_size = batch_size
         self.num_actions = num_actions
         self.num_hidden = num_hidden
         self.discount = discount
         self.learning_rate = learning_rate
+        self.regularization = regularization
         self.update_rule = update_rule
         self.freeze_interval = freeze_interval
         self.rng = rng if rng else np.random.RandomState()
@@ -103,7 +105,7 @@ class QNetwork(object):
         diff = target - q_vals[T.arange(batch_size), actions.reshape((-1,))].reshape((-1, 1))
 
         loss = 0.5 * diff ** 2
-        loss = T.mean(loss)
+        loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
 
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
@@ -180,13 +182,14 @@ class QNetwork(object):
 
 class ConvQNetwork(object):
 
-    def __init__(self, input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, update_rule, freeze_interval, rng):
+    def __init__(self, input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng):
         self.input_shape = input_shape
         self.batch_size = batch_size
         self.num_actions = num_actions
         self.num_hidden = num_hidden
         self.discount = discount
         self.learning_rate = learning_rate
+        self.regularization = regularization
         self.update_rule = update_rule
         self.freeze_interval = freeze_interval
         self.rng = rng if rng else np.random.RandomState()
@@ -275,7 +278,7 @@ class ConvQNetwork(object):
         diff = target - q_vals[T.arange(batch_size), actions.reshape((-1,))].reshape((-1, 1))
 
         loss = 0.5 * diff ** 2
-        loss = T.mean(loss)
+        loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
 
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
@@ -332,16 +335,8 @@ class ConvQNetwork(object):
             b=lasagne.init.Constant(.1)
         )
 
-        l_hidden1 = lasagne.layers.DenseLayer(
-            l_conv2,
-            num_units=self.num_hidden,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
-        )
-
         l_out = lasagne.layers.DenseLayer(
-            l_hidden1,
+            l_conv2,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),

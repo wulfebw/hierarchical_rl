@@ -1,4 +1,6 @@
-
+tonight
+-------
+1. decide between cnn vs flat
 2. compressor network (compression loss as incentive, as temp for softmax)
 3. recurrent network
 4. stacked recurrent network
@@ -15,8 +17,9 @@
 13. read papers
 14. should the loss behave differently? why does it go to zero so quickly?
     - why is it bimodal or something?
+        - bimodal proabably b/c sometime batch contains reward pos and sometimes not?
 15. improve visualizations
-
+    - some method of showing how the different runs did
 
 ---
 problems with qnet
@@ -25,6 +28,7 @@ problems with qnet
 2. need regularization? 
 3. need to make tests checking outputs given set weights and inputs
 5. maybe need to be taking random actions till replay memory full
+6. check that the weights are sensible after training
 
 ---
 papers to read (again)

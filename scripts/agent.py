@@ -260,7 +260,7 @@ class NeuralAgent(Agent):
         """
         :description: perform tasks at the end of an epoch
         """
-        self.logger.log_epoch(epoch, self.network)
+        self.logger.log_epoch(epoch, self.network, self.policy)
 
     def get_q_values(self, state):
         """
@@ -274,9 +274,13 @@ class NeuralAgent(Agent):
         """
         :description: converts a state from an extenarl format to an internal one
         """
-        # converts it to an array and zero-centers its values
-        #return np.array(state) - self.mean_state_values
-        formatted_state = np.zeros((1,10,10))
-        formatted_state[0, state[0], state[1]] = 1
-        #formatted_state = formatted_state.flatten()
+        # fc
+        formatted_state = np.zeros((9,9))
+        formatted_state[state[0], state[1]] = 1
+        formatted_state = formatted_state.flatten()
+
+        # conv
+        # formatted_state = np.zeros((1,5,5))
+        # formatted_state[0, state[0], state[1]] = 1
+
         return formatted_state

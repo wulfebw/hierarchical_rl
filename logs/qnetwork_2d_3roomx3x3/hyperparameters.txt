@@ -1,0 +1,7 @@
+freeze_interval: 5049
+num_hidden: 30
+learning_rate: 0.00912963986574
+batch_size: 20
+update_rule: adam
+discount: 0.95
+replay_memory_capacity: 20000

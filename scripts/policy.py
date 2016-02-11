@@ -18,6 +18,7 @@ class EpsilonGreedy(Policy):
         self.actions = range(num_actions)
         self.exploration_prob = exploration_prob
         self.min_exploration_prob = min_exploration_prob
+        self.actions_until_min = actions_until_min
         assert actions_until_min != 0, 'actions_until_min must be positive'
         self.exploration_reduction = (exploration_prob - min_exploration_prob) / float(actions_until_min)
 
@@ -38,6 +39,7 @@ class Softmax(Policy):
         self.actions = range(num_actions)
         self.tau = float(tau)
         self.min_tau = min_tau
+        self.actions_until_min = actions_until_min
         assert actions_until_min != 0, 'actions_until_min must be positive'
         self.tau_reduction = (tau - min_tau) / float(actions_until_min)
 

@@ -4,11 +4,14 @@
 
 import collections 
 import datetime
+import lasagne
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle
 import sys
+
+import learning_utils
 
 LOGGING_DIRECTORY = '../logs'
 MAXIMUM_WEIGHT_MAGNITUDE = 1000
@@ -195,18 +198,26 @@ class NeuralLogger(Logger):
 
     def __init__(self, agent_name, logging=True):
         super(NeuralLogger, self).__init__(agent_name, logging)
+        self.weight_magnitudes = []
+        self.weight_variances = []
+        self.exploration_probs = []
 
-    def log_epoch(self, epoch, network):
+    def log_epoch(self, epoch, network, policy):
         if not self.logging:
             return
 
         if self.log_dir is None:
             self.create_log_dir()
 
-        self.record_stat('actions', self.actions, epoch)
-        self.record_stat('rewards', self.episode_rewards, epoch)
-        self.record_stat('losses', self.losses, epoch)
-        self.record_weights(epoch, network)
+        try:    
+            self.record_stat('actions', self.actions, epoch)
+            self.record_stat('rewards', self.episode_rewards, epoch)
+            self.record_stat('losses', self.losses, epoch)
+            self.record_weights(epoch, network)
+            self.record_policy(epoch, policy)
+        except Exception as e:
+            print 'ERROR occurred during logging: '
+            print e
 
     def record_weights(self, epoch, network):
         """
@@ -218,10 +229,29 @@ class NeuralLogger(Logger):
         :type network: any class implementing get_params()
         :param network: the networks whose weights should be saved
         """
+        params = network.get_params()
+        self.save_params(params, epoch)
+        self.plot_weights(params, epoch)
+
+    def save_params(self, params, epoch):
         filename = 'network_file_epoch_{}.save'.format(epoch)
         filepath = os.path.join(self.log_dir, filename)
-        params = network.get_params()
-        # dump params to file
+        np.savez(filepath, params=params)
+
+    def plot_weights(self, params, epoch):
+        means = []
+        variances = []
+        for param in params:
+            means.append(np.mean(np.abs(param)))
+            variances.append(np.var(param))
+        self.weight_magnitudes.append(np.mean(means))
+        self.record_stat('weight_magnitudes', self.weight_magnitudes, epoch)
+        self.weight_variances.append(np.mean(variances))
+        self.record_stat('weight_variances', self.weight_variances, epoch)
+
+    def record_policy(self, epoch, policy):
+        self.exploration_probs.append(policy.exploration_prob)
+        self.record_stat('exploration_probs', self.exploration_probs, epoch)
 
     def log_hyperparameters(self, network, policy, replay_memory):
         if self.log_dir is None:
@@ -232,11 +262,14 @@ class NeuralLogger(Logger):
         hyperparameters = {}
         hyperparameters['batch_size'] = network.batch_size
         hyperparameters['num_hidden'] = network.num_hidden
+        hyperparameters['num_parameters'] = lasagne.layers.count_params(network.l_out)
         hyperparameters['discount'] = network.discount
         hyperparameters['learning_rate'] = network.learning_rate
+        hyperparameters['regularization'] = network.regularization
         hyperparameters['update_rule'] = network.update_rule
         hyperparameters['freeze_interval'] = network.freeze_interval
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
+        hyperparameters['actions_until_min'] = policy.actions_until_min
 
         with open(filepath, 'wb') as f:
             for k, v in hyperparameters.iteritems():
