@@ -6,6 +6,8 @@ tonight
 4. stacked recurrent network
 5. batchnorm
 6. prioritized experience replay
+    - sliding window -> if sufficiently large, and sampling higher-td experiences, may not need to save in memory for longer 
+    - this would require feedback from training to the memory
 7. stacked recurrent with different length of BPTT
 8. why does the value image have all the same values sometimes?
 9. graph the weight updates vs the size of the weights -> should be ratio of 1e-3
@@ -20,6 +22,14 @@ tonight
         - bimodal proabably b/c sometime batch contains reward pos and sometimes not?
 15. improve visualizations
     - some method of showing how the different runs did
+16. do they perform training after every step? or is it every once in a while or what?
+17. should I think of a better mdp?
+18. some notion of convergence in the test mdps
+    - rather than just until "10 in a row or something"
+19. clip TD error?
+    - should keep track of it 
+        - isn't this just the loss?
+20. 
 
 ---
 problems with qnet

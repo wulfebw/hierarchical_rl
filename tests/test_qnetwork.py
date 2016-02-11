@@ -168,7 +168,7 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
             room_size = 3
-            num_rooms = 3
+            num_rooms = 4
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
@@ -177,21 +177,21 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
-            network = qnetwork.QNetwork(input_shape=9*9, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            network = qnetwork.QNetwork(input_shape=12*12, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 10
-            epoch_length = 100
+            epoch_length = 200
             test_epoch_length = 0
-            max_steps = 90
+            max_steps = 150
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
-            rm = replay_memory.ReplayMemory(batch_size)
+            rm = replay_memory.ReplayMemory(batch_size, capacity=10000)
             a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
                     mean_state_values=mean_state_values, logging=True)
             run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(5):
+        for idx in range(2):
             lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
             fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
             nh = 32 #int(np.random.uniform(8, 32)) # num hidden

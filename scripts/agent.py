@@ -275,7 +275,7 @@ class NeuralAgent(Agent):
         :description: converts a state from an extenarl format to an internal one
         """
         # fc
-        formatted_state = np.zeros((9,9))
+        formatted_state = np.zeros((12,12))
         formatted_state[state[0], state[1]] = 1
         formatted_state = formatted_state.flatten()
 
