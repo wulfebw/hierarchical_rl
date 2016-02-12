@@ -125,7 +125,7 @@ class MazeMDP(MDP):
         self.room_size = room_size
         self.num_rooms = num_rooms
         self.max_position = self.room_size * self.num_rooms - 1
-        self.end_state = (self.max_position - 1, self.max_position - 1)
+        self.end_state = (self.max_position, self.max_position)
 
     def get_default_action(self):
         return (1,0)
@@ -134,10 +134,10 @@ class MazeMDP(MDP):
         return [(1,0),(0,1),(-1,0),(0,-1)]
 
     def get_start_state(self):
-        return (1,1)   
+        return (0,0)   
 
     def get_discount(self):
-        return 0.95
+        return 0.9
 
     def get_mean_state_values(self):
         return np.repeat(self.max_position / 2., 2)
@@ -210,7 +210,7 @@ class MazeMDP(MDP):
         # print 'next_state: {}'.format(next_state)
         # raw_input()
 
-        return [(next_state, 1, reward)]
+        return [(next_state, 0.9, reward), (state, 0.1, 0)]
 
     def print_v(self, V):
         for ridx in reversed(range(self.max_position + 1)):

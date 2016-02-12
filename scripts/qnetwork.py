@@ -104,9 +104,18 @@ class QNetwork(object):
         # reshape((-1,)) == 'make a row vector', reshape((-1, 1) == 'make a column vector'
         diff = target - q_vals[T.arange(batch_size), actions.reshape((-1,))].reshape((-1, 1))
 
-        loss = 0.5 * diff ** 2
+        # a lot of the recent work clips the td error at 1 so we do that here
+        # the problem is that gradient backpropagating through this minimum node
+        # will be zero if diff is larger then 1.0 (because changing params before
+        # the minimum does not impact the output of the minimum). To account for 
+        # this we take the part of the td error (magnitude) greater than 1.0 and simply
+        # add it to the loss, which allows gradient to backprop but just linearly
+        # in the td error rather than quadratically
+        quadratic_part = T.minimum(abs(diff), 1.0)
+        linear_part = abs(diff) - quadratic_part
+        loss = 0.5 * quadratic_part ** 2 + linear_part
         loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
-
+        
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
         updates = self.initialize_updates(self.update_rule, loss, params, self.learning_rate)
@@ -140,32 +149,32 @@ class QNetwork(object):
             shape=(batch_size, input_shape)
         )
 
-        l_hidden1 = lasagne.layers.DenseLayer(
-            l_in,
-            num_units=self.num_hidden,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
-        )
+        # l_hidden1 = lasagne.layers.DenseLayer(
+        #     l_in,
+        #     num_units=self.num_hidden,
+        #     nonlinearity=lasagne.nonlinearities.rectify,
+        #     W=lasagne.init.HeNormal(),
+        #     b=lasagne.init.Constant(.1)
+        # )
 
-        l_hidden2 = lasagne.layers.DenseLayer(
-            l_hidden1,
-            num_units=self.num_hidden,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
-        )
+        # l_hidden2 = lasagne.layers.DenseLayer(
+        #     l_hidden1,
+        #     num_units=self.num_hidden,
+        #     nonlinearity=lasagne.nonlinearities.rectify,
+        #     W=lasagne.init.HeNormal(),
+        #     b=lasagne.init.Constant(.1)
+        # )
 
-        l_hidden3 = lasagne.layers.DenseLayer(
-            l_hidden2,
-            num_units=self.num_hidden,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
-        )
+        # l_hidden3 = lasagne.layers.DenseLayer(
+        #     l_hidden2,
+        #     num_units=self.num_hidden,
+        #     nonlinearity=lasagne.nonlinearities.rectify,
+        #     W=lasagne.init.HeNormal(),
+        #     b=lasagne.init.Constant(.1)
+        # )
 
         l_out = lasagne.layers.DenseLayer(
-            l_hidden3,
+            l_in,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
@@ -277,7 +286,17 @@ class ConvQNetwork(object):
         # reshape((-1,)) == 'make a row vector', reshape((-1, 1) == 'make a column vector'
         diff = target - q_vals[T.arange(batch_size), actions.reshape((-1,))].reshape((-1, 1))
 
-        loss = 0.5 * diff ** 2
+
+        # a lot of the deepmind work clips the td error at 1 so we do that here
+        # the problem is that gradient backpropagating through this minimum node
+        # will be zero if diff is larger then 1.0 (because changing params before
+        # the minimum does not impact the output of the minimum). To account for 
+        # this we take the part of the td error (magnitude) greater than 1.0 and simply
+        # add it to the loss, which allows gradient to backprop but just linearly
+        # in the td error rather than quadratically
+        quadratic_part = T.minimum(abs(diff), 1.0)
+        linear_part = abs(diff) - quadratic_part
+        loss = 0.5 * quadratic_part ** 2 + linear_part
         loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
 
         # 5. formulate the symbolic updates 
@@ -316,7 +335,7 @@ class ConvQNetwork(object):
         l_conv1 = lasagne.layers.Conv2DLayer(
             l_in,
             num_filters=self.num_hidden,
-            filter_size=(3,3),
+            filter_size=(1,1),
             stride = 1,
             pad = 'same',
             nonlinearity=lasagne.nonlinearities.rectify,
@@ -324,19 +343,19 @@ class ConvQNetwork(object):
             b=lasagne.init.Constant(.1)
         )
 
-        l_conv2 = lasagne.layers.Conv2DLayer(
-            l_conv1,
-            num_filters=self.num_hidden,
-            filter_size=(3,3),
-            stride = 1,
-            pad = 'same',
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(.1)
-        )
+        # l_conv2 = lasagne.layers.Conv2DLayer(
+        #     l_conv1,
+        #     num_filters=self.num_hidden,
+        #     filter_size=(3,3),
+        #     stride = 1,
+        #     pad = 'same',
+        #     nonlinearity=lasagne.nonlinearities.rectify,
+        #     W=lasagne.init.HeNormal(),
+        #     b=lasagne.init.Constant(.1)
+        # )
 
         l_out = lasagne.layers.DenseLayer(
-            l_conv2,
+            l_conv1,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),

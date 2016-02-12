@@ -34,7 +34,7 @@ class Logger(object):
     :description: tracks and logs information about an agent
     """
     
-    def __init__(self, agent_name, logging=True):
+    def __init__(self, agent_name, logging=True, verbose=False):
         """
         :type agent_name: string 
         :param agent_name: name of the agent whose information is being logged
@@ -48,10 +48,12 @@ class Logger(object):
         self.episode_rewards = []
         self.losses = []
         self.states = []
+        self.updates = 0
         self.state_values = collections.defaultdict(lambda: [])
         self.weights = None
         self.log_dir = None
         self.logging = logging
+        self.verbose = verbose
 
     def log_action(self, action):
         self.actions.append(action)
@@ -60,6 +62,7 @@ class Logger(object):
         self.rewards.append(reward)
 
     def log_loss(self, loss):
+        self.updates += 1
         self.losses.append(loss)
 
     def log_weights(self, weights):
@@ -92,7 +95,7 @@ class Logger(object):
         """
         :description: performs tasks associated with the ending of an epidoe
         """
-        self.episode_rewards.append(np.sum(self.rewards))
+        self.episode_rewards.append((self.updates, np.sum(self.rewards)))
         self.rewards = []
 
     def record_stat(self, name, values, epoch):
@@ -123,11 +126,21 @@ class Logger(object):
         """
         :description: plots the provided values
         """
+        if len(values) < 1:
+            return
+
         filename = '{}_graph.png'.format(name)
         filepath = os.path.join(self.log_dir, filename)
+
+        values = np.array(values)
+        if len(values.shape) < 2:
+            values = np.vstack((np.arange(len(values)), values))
+        else:
+            values = values.T
+
         plt.figure()
-        plt.scatter(np.arange(len(values)), values)
-        plt.plot(moving_average(values, 50), c='r')
+        plt.scatter(values[0, :], values[1, :])
+        plt.plot(values[0, :], moving_average(values[1, :], 50), c='r')
         plt.xlabel('Updates')
         plt.ylabel(name)
         plt.savefig(filepath)
@@ -166,13 +179,14 @@ class Logger(object):
         """
         :description: keeps track of how the q_values change over time
         """
+
         mean_value = np.mean(V.values())
         max_value = np.max(V.values())
         min_value = np.min(V.values())
         self.state_values['mean'].append(mean_value)
         self.state_values['max'].append(max_value)
         self.state_values['min'].append(min_value)
-            
+        self.state_values['start'].append(V[(0,0)])
         self.plot_values()
 
     def plot_values(self):
@@ -188,6 +202,7 @@ class Logger(object):
         plt.scatter(np.arange(len(self.state_values['mean'])), self.state_values['mean'], c='b')
         plt.scatter(np.arange(len(self.state_values['max'])), self.state_values['max'], c='r')
         plt.scatter(np.arange(len(self.state_values['min'])), self.state_values['min'], c='g')
+        plt.scatter(np.arange(len(self.state_values['start'])), self.state_values['start'], marker='*')
         plt.savefig(filepath)
 
 
@@ -196,8 +211,8 @@ class NeuralLogger(Logger):
     :description: inherting class that accomodates a network based agent
     """
 
-    def __init__(self, agent_name, logging=True):
-        super(NeuralLogger, self).__init__(agent_name, logging)
+    def __init__(self, agent_name, logging=True, verbose=False):
+        super(NeuralLogger, self).__init__(agent_name, logging, verbose)
         self.weight_magnitudes = []
         self.weight_variances = []
         self.exploration_probs = []

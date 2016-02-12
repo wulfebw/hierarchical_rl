@@ -167,22 +167,22 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
     def test_qnetwork_solves_small_mdp(self):
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
-            room_size = 3
-            num_rooms = 4
+            room_size = 5
+            num_rooms = 2
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = 0
-            discount = .95
+            mdp.MOVE_REWARD = -0.01
+            discount = 1
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
-            network = qnetwork.QNetwork(input_shape=12*12, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            network = qnetwork.QNetwork(input_shape=10*10, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 10
-            epoch_length = 200
+            epoch_length = 100
             test_epoch_length = 0
-            max_steps = 150
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
+            max_steps = 200
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size, capacity=10000)
             a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
@@ -191,10 +191,10 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(2):
-            lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
+        for idx in range(5):
+            lr = 1e-3 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
             fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
-            nh = 32 #int(np.random.uniform(8, 32)) # num hidden
+            nh = 4 #int(np.random.uniform(8, 32)) # num hidden
             reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
@@ -215,8 +215,8 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
     def test_qnetwork_solves_small_mdp(self):
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
-            room_size = 3
-            num_rooms = 3
+            room_size = 5
+            num_rooms = 2
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
@@ -225,12 +225,12 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 50
-            network = qnetwork.ConvQNetwork(input_shape=(9,9), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            network = qnetwork.ConvQNetwork(input_shape=(10,10), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             
-            num_epochs = 10
-            epoch_length = 50
+            num_epochs = 2
+            epoch_length = 3
             test_epoch_length = 0
-            max_steps = 81
+            max_steps = 1000
             run_tests = False
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
