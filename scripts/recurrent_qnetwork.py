@@ -1,5 +1,4 @@
 import lasagne
-from lasagne.layers.normalization import batch_norm
 from lasagne.regularization import regularize_network_params, l2
 import learning_utils
 import numpy as np
@@ -40,7 +39,7 @@ class RecurrentQNetwork(object):
 
     def get_q_values(self, state):
         states = np.zeros((self.batch_size, self.sequence_length, self.input_shape), dtype=theano.config.floatX)
-        states[0, 0, :] = state
+        states[0, :, :] = state
         self.states_shared.set_value(states)
         q_values = self._get_q_values()[0]
         return q_values

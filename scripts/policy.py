@@ -9,13 +9,19 @@ import learning_utils
 
 class Policy(object):
 
+    def __init__(self, num_actions):
+        self.actions = range(num_actions)
+
     def choose_action(self, q_values):
         raise NotImplementedError("Override me")
+
+    def random_action(self):
+        return random.choice(self.actions)
 
 class EpsilonGreedy(Policy):
 
     def __init__(self, num_actions, exploration_prob, min_exploration_prob, actions_until_min):
-        self.actions = range(num_actions)
+        super(EpsilonGreedy, self).__init__(num_actions)
         self.exploration_prob = exploration_prob
         self.min_exploration_prob = min_exploration_prob
         self.actions_until_min = actions_until_min
@@ -36,7 +42,7 @@ class EpsilonGreedy(Policy):
 class Softmax(Policy):
 
     def __init__(self, num_actions, tau, min_tau, actions_until_min):
-        self.actions = range(num_actions)
+        super(Softmax, self).__init__(num_actions)
         self.tau = float(tau)
         self.min_tau = min_tau
         self.actions_until_min = actions_until_min

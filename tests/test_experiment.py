@@ -58,7 +58,7 @@ class TestExperimentMazeSolving(TestExperiment):
     def test_run_with_maze_mdp_and_working_agent_completes(self):
         mdp = mdps.MazeMDP(5, 1)
         num_actions = len(mdp.get_actions(None))
-        discount = mdp.get_discount()
+        discount = 1
         exploration_prob = .3
         step_size = 1e-2
         a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
@@ -79,11 +79,11 @@ class TestExperimentMazeSolving(TestExperiment):
         mdp.MOVE_REWARD = -0.1
         num_actions = len(mdp.get_actions(None))
         discount = 1
-        exploration_prob = .7
-        step_size = 2e-1
+        exploration_prob = .5
+        step_size = 3e-1
         a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
         num_epochs = 20
-        epoch_length = 100
+        epoch_length = 150
         test_epoch_length = 0
         max_steps = 100
         run_tests = False
@@ -91,11 +91,11 @@ class TestExperimentMazeSolving(TestExperiment):
         e.run()
 
         V = get_V(e)
-        expected = {(0,0):0.5, (1,0):0.6, (2,0):0.7, (3,0):0.8, (4,0):0.7,
-                    (0,1):0.6, (1,1):0.7, (2,1):0.8, (3,1):0.9, (4,1):0.8,
-                    (0,2):0.7, (1,2):0.8, (2,2):0.9, (3,2):1.0, (4,2):0.9,
-                    (0,3):0.8, (1,3):0.9, (2,3):1.0, (3,3):0.0, (4,3):1.0,
-                    (0,4):0.7, (1,4):0.8, (2,4):0.9, (3,4):1.0, (4,4):0.9}
+        expected = {(0,0):0.3, (1,0):0.4, (2,0):0.5, (3,0):0.6, (4,0):0.7,
+                    (0,1):0.4, (1,1):0.5, (2,1):0.6, (3,1):0.7, (4,1):0.8,
+                    (0,2):0.5, (1,2):0.6, (2,2):0.7, (3,2):0.8, (4,2):0.9,
+                    (0,3):0.6, (1,3):0.7, (2,3):0.8, (3,3):0.9, (4,3):1.0,
+                    (0,4):0.7, (1,4):0.8, (2,4):0.9, (3,4):1.0, (4,4):0.0}
 
         max_diff = 1e-1
         for k in expected.keys():
@@ -108,14 +108,14 @@ class TestExperimentMazeSolving(TestExperiment):
         mdp.EXIT_REWARD = 1
         mdp.MOVE_REWARD = -0.1
         num_actions = len(mdp.get_actions(None))
-        discount = mdp.get_discount()
+        discount = 1
         exploration_prob = .5
         step_size = 1
         a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
         num_epochs = 10
-        epoch_length = 100
+        epoch_length = 200
         test_epoch_length = 0
-        max_steps = 1000
+        max_steps = 300
         run_tests = False
         e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests)
         e.run()

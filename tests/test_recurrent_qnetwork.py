@@ -1,6 +1,7 @@
 import lasagne
 import numpy as np
 import os
+import random
 import shutil
 import sys
 import theano
@@ -129,38 +130,40 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
             room_size = 5
-            num_rooms = 2
+            num_rooms = 1
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
             mdp.MOVE_REWARD = -0.01
             discount = 1
+            sequence_length = 2
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
             network = recurrent_qnetwork.RecurrentQNetwork(input_shape=(room_size * num_rooms)**2, 
-                    sequence_length=1, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, 
-                    discount=discount, learning_rate=learning_rate, regularization=reg, 
+                    sequence_length=sequence_length, batch_size=batch_size, num_actions=4, num_hidden=
+                    num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, 
                     update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 10
-            epoch_length = 200 
+            epoch_length = 400 
             test_epoch_length = 0
             max_steps = (room_size * num_rooms)**2
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
+            epsilon_decay = (num_epochs * epoch_length * max_steps)
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
-            rm = replay_memory.SequenceReplayMemory(sequence_length=1, batch_size=batch_size, capacity=10000)
-            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
+            rm = replay_memory.SequenceReplayMemory(input_shape=(room_size * num_rooms)**2,
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=10000)
+            a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, 
                     mean_state_values=mean_state_values, logging=True)
             run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, 
                 value_logging=True)
             e.run()
 
-        for idx in range(10):
-            lr = 1e-3 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
-            fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
-            nh = 2 * idx + 1 #int(np.random.uniform(8, 32)) # num hidden
-            reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
+        for idx in range(5):
+            lr = random.choice([1e-4, 5e-4, 1e-3, 1e-2])  # 1e-3 learning rate
+            fi = random.choice([2000, 3000, 4000, 5000]) # 3000 freeze interval
+            nh = random.choice([2, 4, 8, 16]) # 8 num hidden
+            reg = random.choice([1e-5, 1e-4, 1e-3]) # 1e-4 regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)

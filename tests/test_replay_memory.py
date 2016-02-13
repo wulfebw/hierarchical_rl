@@ -77,14 +77,15 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         batch_size = 100
         state_shape = 2
         sequence_length = 1
-        rm = replay_memory.SequenceReplayMemory(sequence_length, batch_size)
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
         for idx in range(1000):
             state = np.ones(state_shape)
             action = 0
             reward = 0
             next_state = np.ones(state_shape)
-            terminal = 0
-            rm.store((state, action, reward, next_state, terminal))
+            terminal = False
+            rm.store(state, action, reward, terminal)
 
         states, actions, rewards, next_states, terminals = rm.sample_batch()
         self.assertEquals(states.shape, (batch_size, sequence_length, state_shape))
@@ -97,14 +98,15 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         batch_size = 10
         state_shape = 2
         sequence_length = 2
-        rm = replay_memory.SequenceReplayMemory(sequence_length, batch_size)
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
         for idx in range(1000):
             state = np.ones(state_shape)
             action = 0
             reward = 0
             next_state = np.ones(state_shape)
-            terminal = 0
-            rm.store((state, action, reward, next_state, terminal))
+            terminal = False
+            rm.store(state, action, reward, terminal)
 
         states, actions, rewards, next_states, terminals = rm.sample_batch()
         self.assertEquals(states.shape, (batch_size, sequence_length, state_shape))
@@ -115,18 +117,39 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         self.assertEquals(next_states.sum(), batch_size * sequence_length * state_shape)
         self.assertEquals(terminals.shape, (batch_size, 1))
 
+    def test_minibatch_sample_shapes_1D_state_terminal(self):
+        batch_size = 200
+        state_shape = 2
+        sequence_length = 2
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+        prev_state_terminal = False
+        for idx in range(1, 1001):
+            action = 0
+            reward = 0
+            state = np.ones(state_shape) * idx
+            state = state if not prev_state_terminal else np.zeros(state_shape)
+            prev_state_terminal = False if np.random.random() < .8 else True
+            rm.store(state, action, reward, prev_state_terminal)
+
+        states, actions, rewards, next_states, terminals = rm.sample_batch()
+        for state, next_state, terminal in zip(states, next_states, terminals):
+            if terminal:
+                self.assertEquals(next_state.tolist()[-1], np.zeros(state_shape).tolist())
+
     def test_minibatch_sample_shapes_multidimensional_state_sequence_length_1(self):
         batch_size = 100
         state_shape = (1,2,2)
         sequence_length = 1
-        rm = replay_memory.SequenceReplayMemory(sequence_length, batch_size)
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
         for idx in range(1000):
             state = np.ones(state_shape)
             action = 0
             reward = 0
             next_state = np.ones(state_shape)
-            terminal = 0
-            rm.store((state, action, reward, next_state, terminal))
+            terminal = False
+            rm.store(state, action, reward, terminal)
 
         states, actions, rewards, next_states, terminals = rm.sample_batch()
         expected_states_shape = (batch_size,) + (sequence_length,) + state_shape
@@ -141,14 +164,15 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         batch_size = 100
         state_shape = (1,2,2)
         sequence_length = 2
-        rm = replay_memory.SequenceReplayMemory(sequence_length, batch_size)
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
         for idx in range(1000):
             state = np.ones(state_shape)
             action = 0
             reward = 0
             next_state = np.ones(state_shape)
-            terminal = 0
-            rm.store((state, action, reward, next_state, terminal))
+            terminal = False
+            rm.store(state, action, reward, terminal)
 
         states, actions, rewards, next_states, terminals = rm.sample_batch()
         expected_states_shape = (batch_size,) + (sequence_length,) + state_shape
@@ -164,17 +188,18 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         batch_size = 100
         state_shape = (1,2,1)
         sequence_length = 2
-        rm = replay_memory.SequenceReplayMemory(sequence_length, batch_size)
+        capacity = 1000
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
         for idx in range(1000):
             state = np.ones(state_shape)
             action = 0
             reward = 0
             next_state = np.ones(state_shape)
-            terminal = 0
-            rm.store((state, action, reward, next_state, terminal))
+            terminal = False 
+            rm.store(state, action, reward, terminal)
 
         states, actions, rewards, next_states, terminals = rm.sample_batch()
-        expected_states_shape = (batch_size,) + state_shape
+        expected_states_shape = (batch_size,) + (sequence_length,) + state_shape
 
         self.assertEquals(states.shape, expected_states_shape)
         self.assertEquals(actions.shape, (batch_size, 1))

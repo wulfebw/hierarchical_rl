@@ -156,7 +156,6 @@ class QLearningAgent(Agent):
     def finish_epoch(self, epoch):
         self.logger.log_epoch(epoch)
 
-
 class NeuralAgent(Agent):
     """
     :description: A class that wraps a network so it may more easily interact with an experiment. 
@@ -212,7 +211,7 @@ class NeuralAgent(Agent):
         :description: collects a minibatch of experiences and passes them to the network to train
         """
         # wait until replay memory has samples
-        if self.replay_memory.isEmpty():
+        if self.replay_memory.is_empty():
             return
 
         # collect minibatch
@@ -274,8 +273,139 @@ class NeuralAgent(Agent):
         """
         :description: converts a state from an extenarl format to an internal one
         """
+        # nothing
+        # formatted_state = np.array(state)
+
         # fc
-        formatted_state = np.zeros((10,10))
+        row = np.zeros(10)
+        row[state[0]] = 1
+        col = np.zeros(10)
+        col[state[1]] = 1
+        formatted_state = np.hstack((row, col))
+
+        # conv
+        # formatted_state = np.zeros((1,10,10))
+        # formatted_state[0, state[0], state[1]] = 1
+
+        return formatted_state
+
+class RecurrentNeuralAgent(Agent):
+    """
+    :description: A class that wraps a network so it may more easily interact with an experiment. 
+    """
+    def __init__(self, network, policy, replay_memory, mean_state_values, logging=False):
+        self.network = network
+        self.policy = policy
+        self.replay_memory = replay_memory
+        self.mean_state_values = mean_state_values
+        self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
+        self.logger.log_hyperparameters(network, policy, replay_memory)
+
+        self.prev_state = None
+        self.prev_action = None
+        
+    def step(self, next_state, reward):
+        """
+        :description: the primary method of this class, which 'steps' the agent and network forward one time step. This includes selecting an action, making use of the new state and reward, and performing training.
+
+        :type next_state: tuple or array
+        :param next_state: the next state observed (i.e., s')
+
+        :type reward: int 
+        :param reward: the reward associated with having moved from the previous state to the current state
+
+        :type rval: int
+        :param rval: returns the action to next be taken within the environment
+        """
+        # need to transform an external state format to an internal one
+        next_state = self.convert_state_to_internal_format(next_state)
+
+        # store current (s,a,r,s') tuple
+        self.replay_memory.store(self.prev_state, self.prev_action, reward, terminal=False)
+
+        # perform training
+        self.train()
+
+        # retrieve an action
+        action = self.get_action(next_state)
+
+        # set previous values
+        self.prev_state = next_state
+        self.prev_action = action
+
+        # log information
+        self.logger.log_reward(reward)
+        self.logger.log_action(self.prev_action)
+
+        return action
+
+    def train(self):
+        """
+        :description: collects a minibatch of experiences and passes them to the network to train
+        """
+        # wait until replay memory has samples
+        if not self.replay_memory.is_ready_to_sample():
+            return
+
+        # collect minibatch
+        states, actions, rewards, next_states, terminals = self.replay_memory.sample_batch()
+
+        # pass to network to perform training
+        loss = self.network.train(states, actions, rewards, next_states, terminals)
+        self.logger.log_loss(loss)
+
+    def get_action(self, state):
+        """
+        :description: gets an action given the current state. Defers to the network for selecting the action.
+
+        :type state: numpy array
+        :param state: the state used to determine the action
+        """
+        # wait until agent starts learning to use network to decide action
+        if not self.replay_memory.is_ready_to_sample():
+            return self.policy.random_action()
+
+        sequence = self.replay_memory.make_last_sequence(state)
+        q_values = self.network.get_q_values(sequence)
+        return self.policy.choose_action(q_values)
+
+    def start_episode(self, state):
+        """
+        description: determines the first action to take and initializes internal variables
+        """
+        self.prev_state = self.convert_state_to_internal_format(state)
+        self.prev_action = self.get_action(self.prev_state)
+
+        self.logger.log_action(self.prev_action)
+        return self.prev_action
+
+    def finish_episode(self):
+        """
+        :description: perform tasks at the end of episode
+        """
+        self.replay_memory.store(self.prev_state, self.prev_action, reward=0, terminal=True)
+        self.logger.finish_episode()
+
+    def finish_epoch(self, epoch):
+        """
+        :description: perform tasks at the end of an epoch
+        """
+        self.logger.log_epoch(epoch, self.network, self.policy)
+
+    def get_q_values(self, state):
+        """
+        :description: returns the q values associated with a given state. Used for printing out a representation of the mdp with the values included. 
+        """
+        state = self.convert_state_to_internal_format(state)
+        q_values = self.network.get_q_values(state)
+        return q_values
+
+    def convert_state_to_internal_format(self, state):
+        """
+        :description: converts a state from an extenarl format to an internal one
+        """
+        # fc
+        formatted_state = np.zeros((5,5))
         formatted_state[state[0], state[1]] = 1
         formatted_state = formatted_state.flatten()
 

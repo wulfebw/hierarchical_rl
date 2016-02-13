@@ -205,12 +205,7 @@ class MazeMDP(MDP):
         if np.array_equal(next_state, self.end_state):
             reward = self.EXIT_REWARD
 
-        # print 'state: {}'.format(state)
-        # print 'action: {}'.format(action)
-        # print 'next_state: {}'.format(next_state)
-        # raw_input()
-
-        return [(next_state, 0.9, reward), (state, 0.1, 0)]
+        return [(next_state, 0.9, reward), (state, 0.1, self.MOVE_REWARD)]
 
     def print_v(self, V):
         for ridx in reversed(range(self.max_position + 1)):
