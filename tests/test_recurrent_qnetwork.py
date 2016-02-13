@@ -156,10 +156,10 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 value_logging=True)
             e.run()
 
-        for idx in range(1):
-            lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
-            fi = 5000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
-            nh = 1 #int(np.random.uniform(8, 32)) # num hidden
+        for idx in range(10):
+            lr = 1e-3 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
+            fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
+            nh = 2 * idx + 1 #int(np.random.uniform(8, 32)) # num hidden
             reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg

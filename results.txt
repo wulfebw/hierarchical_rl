@@ -40,6 +40,14 @@ number of hidden units
 - seems that lower number of units tends to get stuck in local optima that is relatively poor compared to the larger networks (both should be more than sufficient to express value function?)
 
 ---
+number of hidden layers
+---
+- fewer seems to work better for the large maze - likely due to poor learning setup for the larger networks 
+    - possible that it just also takes less time
+    - batch norm might improve
+    - this is also rum on cpu on laptop so also likely due to lack of memories or something
+
+---
 prioritized experience replay vs none
 ---
 - how much better does it do?
@@ -53,3 +61,11 @@ increasing batch size increases stability
 should you regularize q network?
 ---
 - ? i'm not really sure at all
+- seems that it does not make a huge difference 
+    - you would think it might given that it could overfit the data in the experience replay
+    - used small value of 1e-4 seems to work well
+
+---
+clipping td error (i.e., the loss) 
+---
+- does clipping the td error max the loss graphs look pretty / smooth?

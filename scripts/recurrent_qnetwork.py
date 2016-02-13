@@ -196,7 +196,7 @@ class RecurrentQNetwork(object):
             num_units=self.num_hidden, 
             #mask_input=l_mask, 
             grad_clipping=10,
-            only_return_final=False
+            only_return_final=True
         )
         
         l_out = lasagne.layers.DenseLayer(
