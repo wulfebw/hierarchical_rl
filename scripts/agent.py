@@ -19,7 +19,7 @@ class Agent(object):
         """
         raise NotImplementedError("Override me")
 
-    def finish_episode(self):
+    def finish_episode(self, next_state, reward):
         """
         :description: finalizes an episode for an agent
         """
@@ -52,7 +52,7 @@ class TestAgent(Agent):
         self.episodes += 1
         return random.choice(self.actions)
 
-    def finish_episode(self):
+    def finish_episode(self, next_state, reward):
         pass
 
     def finish_epoch(self, epoch):
@@ -379,9 +379,10 @@ class RecurrentNeuralAgent(Agent):
 
     def finish_episode(self, next_state, reward):
         """
-        :description: perform tasks at the end of episode
+        :description: perform tasks at the end of episode. We don't store the next_state value
+            because the previous state must have been a terminal one.
         """
-        self.replay_memory.store(self.prev_state, self.prev_action, reward=0, terminal=True)
+        self.replay_memory.store(self.prev_state, self.prev_action, reward, terminal=True)
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):
