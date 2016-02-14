@@ -95,6 +95,7 @@ class Logger(object):
         """
         :description: performs tasks associated with the ending of an epidoe
         """
+        
         self.episode_rewards.append((self.updates, np.sum(self.rewards)))
         self.rewards = []
 
@@ -139,6 +140,11 @@ class Logger(object):
             values = values.T
 
         plt.figure()
+        # x_max = 1.2 * max(values[0,:])
+        # x_min = -0.2 * max(values[0,:])
+        # y_max = 1.2 * max(values[1,:])
+        # y_min = -0.2 * max(values[0,:])
+        # plt.axis([x_min, x_max, y_min, y_max])
         plt.scatter(values[0, :], values[1, :])
         plt.plot(values[0, :], moving_average(values[1, :], 50), c='r')
         plt.xlabel('Updates')

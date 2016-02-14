@@ -3,7 +3,7 @@ import numpy as np
 import random
 import theano
 
-DEFAULT_CAPACITY = 10000
+DEFAULT_CAPACITY = 1000
 SAMPLING_CAPACITY_FACTOR = 10.
 
 class ReplayMemory(object):
@@ -14,8 +14,10 @@ class ReplayMemory(object):
         self.first_index = -1
         self.last_index = -1
         self.capacity = capacity
+        self.terminal_count = 0
 
     def store(self, sars_tuple):
+        self.terminal_count += sars_tuple[-1]
         if self.first_index == -1:
             self.first_index = 0
         self.last_index += 1

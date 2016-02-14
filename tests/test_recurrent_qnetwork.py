@@ -160,10 +160,10 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             e.run()
 
         for idx in range(5):
-            lr = random.choice([1e-4, 5e-4, 1e-3, 1e-2])  # 1e-3 learning rate
+            lr = random.choice([1e-2])  # 1e-3 learning rate
             fi = random.choice([2000, 3000, 4000, 5000]) # 3000 freeze interval
-            nh = random.choice([2, 4, 8, 16]) # 8 num hidden
-            reg = random.choice([1e-5, 1e-4, 1e-3]) # 1e-4 regularization
+            nh = random.choice([2, 4, 8]) # 8 num hidden
+            reg = random.choice([1e-5, 1e-4]) # 1e-4 regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)

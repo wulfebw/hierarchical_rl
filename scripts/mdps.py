@@ -36,7 +36,8 @@ class MDP(object):
                 for newState, prob, reward in self.succ_prob_reward(state, action):
                     if newState not in self.states:
                         self.states.add(newState)
-                        queue.append(newState)
+                        if not self.is_end_state(newState):
+                            queue.append(newState)
 
 ###########################################################################
 
@@ -59,6 +60,9 @@ class LineMDP(MDP):
 
     def get_discount(self): 
         return 1
+
+    def is_end_state(self, state):
+        return state == self.length
 
     def succ_prob_reward(self, state, action): 
         if state == self.length:
@@ -136,6 +140,9 @@ class MazeMDP(MDP):
     def get_start_state(self):
         return (0,0)   
 
+    def is_end_state(self, state):
+        return state == self.end_state
+
     def get_discount(self):
         return 0.9
 
@@ -191,7 +198,7 @@ class MazeMDP(MDP):
 
         # if we reach the end state then the episode ends
         if np.array_equal(state, self.end_state):
-            return []
+            raise ValueError('Provided state equals end_state, should have stopped episode in experiment. state: {}\taction:{}'.format(state, action))
 
         if self.runs_into_wall(state, action):
             # if the action runs us into a wall do nothing
@@ -211,7 +218,7 @@ class MazeMDP(MDP):
         for ridx in reversed(range(self.max_position + 1)):
             for cidx in range(self.max_position + 1):
                 if (ridx, cidx) in V:
-                    print round(V[(ridx, cidx)], 1),
+                    print round(V[(ridx, cidx)], 3),
             print('\n')
 
     def get_value_string(self, V):

@@ -48,6 +48,7 @@ class TestMazeMDP(unittest.TestCase):
 #         expected = [2.25, 2.25, 4.5, 4.5, 2.25]
 #         self.assertSequenceEqual(actual, expected)
 
+
 class testLoggerGraphing(unittest.TestCase):
 
     def test_graphs_are_plotted_and_saved_during_experiment(self):

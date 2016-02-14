@@ -7,6 +7,9 @@ def sample(probs):
     """
     :description: given a list of probabilities, randomly select an index into those probabilities
     """
+    if len(probs) < 1:
+      raise ValueError('Sample received an empty list of probabilities. This should not happen. ')
+
     target = random.random()
     accum = 0
     for i, prob in enumerate(probs):

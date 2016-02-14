@@ -73,8 +73,9 @@ class QLearningAgent(Agent):
         self.prev_action = None
 
     def step(self, next_state, reward):
-        self.incorporate_feedback(self.prev_state, self.prev_action, reward, next_state)
+        self.incorporate_feedback(self.prev_state, self.prev_action, reward, next_state, False)
         action = self.get_action(next_state)
+        
         self.prev_state = next_state
         self.prev_action = action
 
@@ -118,7 +119,7 @@ class QLearningAgent(Agent):
             max_action = max((self.getQ(state, action), action) for action in self.actions)[1]
         return max_action
 
-    def incorporate_feedback(self, state, action, reward, next_state):
+    def incorporate_feedback(self, state, action, reward, next_state, terminal):
         """
         :description: performs a Q-learning update
 
@@ -131,7 +132,7 @@ class QLearningAgent(Agent):
         step_size = self.step_size
         prediction = self.getQ(state, action)
         target = reward
-        if next_state != None:
+        if not terminal:
             target += self.discount * max(self.getQ(next_state, next_action) for next_action in self.actions)
 
         diff = target - prediction
@@ -149,8 +150,8 @@ class QLearningAgent(Agent):
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
-    def finish_episode(self):
-        self.incorporate_feedback(self.prev_state, self.prev_action, 0, None)
+    def finish_episode(self, next_state, reward):
+        self.incorporate_feedback(self.prev_state, self.prev_action, reward, next_state, True)
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):
@@ -235,24 +236,21 @@ class NeuralAgent(Agent):
         """
         description: determines the first action to take and initializes internal variables
         """
-        state = self.convert_state_to_internal_format(state)
-        self.prev_state = state
-        self.prev_action = self.get_action(state)
+        self.prev_state = self.convert_state_to_internal_format(state)
+        self.prev_action = self.get_action(self.prev_state)
 
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
-    def finish_episode(self):
+    def finish_episode(self, next_state, reward):
         """
         :description: perform tasks at the end of episode
         """
-        # This is a terminal next_state, so set to None and then when passing to 
-        # network set terminal to 1 so that the network output for this next_state will 
-        # not be considered
-        reward = 0
-        next_state = np.zeros(self.prev_state.shape)
+
         terminal = 1
+        next_state = self.convert_state_to_internal_format(next_state)
         self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state, terminal))
+        self.logger.log_reward(reward)
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):
@@ -379,7 +377,7 @@ class RecurrentNeuralAgent(Agent):
         self.logger.log_action(self.prev_action)
         return self.prev_action
 
-    def finish_episode(self):
+    def finish_episode(self, next_state, reward):
         """
         :description: perform tasks at the end of episode
         """

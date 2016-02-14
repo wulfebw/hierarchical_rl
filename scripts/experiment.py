@@ -80,37 +80,44 @@ class Experiment(object):
 
             # if episode has ended, then break
             if terminal:
+                self.agent.finish_episode(next_state, reward)
                 break
 
             # otherwise, inform the agent and get a new action
             action = self.agent.step(next_state, reward)
             state = next_state
 
-        self.agent.finish_episode()
-
     def step(self, state, action):
         """
         :description: progresses the experiment forward one time step
         """
-        terminal = False
-        next_state = None
-        reward = 0
+        # convert to mdp action format and get transitions
         real_action = self.mdp_actions[action]
         transitions = self.mdp.succ_prob_reward(state, real_action)
 
-        if len(transitions) == 0:
+        # randomly sample a transition
+        i = learning_utils.sample([prob for newState, prob, reward in transitions])
+        next_state, prob, reward = transitions[i]
+
+        # if the next state is terminal note that
+        terminal = False
+        if self.mdp.is_end_state(next_state):
             terminal = True
-        else:
-            i = learning_utils.sample([prob for newState, prob, reward in transitions])
-            next_state, prob, reward = transitions[i]
 
         return next_state, reward, terminal
 
     def finish_epoch(self, epoch):
+        """
+        :description: finalize epoch
+        """
         if self.value_logging:
             self.log_value_string()
 
     def log_value_string(self):
+        """
+        :description: collect the necessary components to print a representation of the optimal value 
+            of each state in the mdp.
+        """
         V = {}
         for state in self.mdp.states:
             V[state] = np.max(self.agent.get_q_values(state))

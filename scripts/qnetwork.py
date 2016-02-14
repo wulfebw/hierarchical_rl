@@ -114,7 +114,7 @@ class QNetwork(object):
         quadratic_part = T.minimum(abs(diff), 1.0)
         linear_part = abs(diff) - quadratic_part
         loss = 0.5 * quadratic_part ** 2 + linear_part
-        loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
+        loss = T.sum(loss) + self.regularization * regularize_network_params(self.l_out, l2)
         
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
@@ -157,13 +157,13 @@ class QNetwork(object):
             b=lasagne.init.Constant(.1)
         )
 
-        # l_hidden2 = lasagne.layers.DenseLayer(
-        #     l_hidden1,
-        #     num_units=self.num_hidden,
-        #     nonlinearity=lasagne.nonlinearities.rectify,
-        #     W=lasagne.init.HeNormal(),
-        #     b=lasagne.init.Constant(.1)
-        # )
+        l_hidden2 = lasagne.layers.DenseLayer(
+            l_hidden1,
+            num_units=self.num_hidden,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(.1)
+        )
 
         # l_hidden3 = lasagne.layers.DenseLayer(
         #     l_hidden2,
@@ -174,7 +174,7 @@ class QNetwork(object):
         # )
 
         l_out = lasagne.layers.DenseLayer(
-            l_hidden1,
+            l_hidden2,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
