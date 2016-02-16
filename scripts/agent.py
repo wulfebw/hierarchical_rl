@@ -404,9 +404,15 @@ class RecurrentNeuralAgent(Agent):
         :description: converts a state from an extenarl format to an internal one
         """
         # fc
-        formatted_state = np.zeros((5,5))
-        formatted_state[state[0], state[1]] = 1
-        formatted_state = formatted_state.flatten()
+        # formatted_state = np.zeros((5,5))
+        # formatted_state[state[0], state[1]] = 1
+        # formatted_state = formatted_state.flatten()
+
+        row = np.zeros(10)
+        row[state[0]] = 1
+        col = np.zeros(10)
+        col[state[1]] = 1
+        formatted_state = np.hstack((row, col))
 
         # conv
         # formatted_state = np.zeros((1,10,10))

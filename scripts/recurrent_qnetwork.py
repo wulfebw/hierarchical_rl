@@ -115,7 +115,7 @@ class RecurrentQNetwork(object):
         quadratic_part = T.minimum(abs(diff), 1.0)
         linear_part = abs(diff) - quadratic_part
         loss = 0.5 * quadratic_part ** 2 + linear_part
-        loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
+        loss = T.sum(loss) + self.regularization * regularize_network_params(self.l_out, l2)
         
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
@@ -150,9 +150,9 @@ class RecurrentQNetwork(object):
             shape=(batch_size, sequence_length, input_shape)
         )
 
-        l_mask = lasagne.layers.InputLayer(
-            shape=(batch_size, sequence_length)
-        )
+        # l_mask = lasagne.layers.InputLayer(
+        #     shape=(batch_size, sequence_length)
+        # )
 
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
@@ -178,9 +178,9 @@ class RecurrentQNetwork(object):
             shape=(batch_size, sequence_length, input_shape)
         )
 
-        l_mask = lasagne.layers.InputLayer(
-            shape=(batch_size, sequence_length)
-        )
+        # l_mask = lasagne.layers.InputLayer(
+        #     shape=(batch_size, sequence_length)
+        # )
 
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 

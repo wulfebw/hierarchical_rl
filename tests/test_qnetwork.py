@@ -244,7 +244,7 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
             network = qnetwork.QNetwork(input_shape=10+10, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
-            num_epochs = 10
+            num_epochs = 200
             epoch_length = 50
             test_epoch_length = 0
             max_steps = (room_size * num_rooms) ** 2 
@@ -259,7 +259,7 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         for idx in range(20):
             lr = random.choice([1e-3])  # learning rate
-            fi = random.choice([3000, 4000, 5000]) # freeze interval
+            fi = random.choice([10000]) # freeze interval
             nh = random.choice([8]) # num hidden
             reg = random.choice([5e-4]) # regularization
             print 'run number: {}'.format(idx)
