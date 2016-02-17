@@ -136,7 +136,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             mdp.EXIT_REWARD = 1
             mdp.MOVE_REWARD = -0.1
             discount = 1
-            sequence_length = 8
+            sequence_length = 2
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
@@ -160,9 +160,9 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(5):
+        for idx in range(1):
             lr = random.choice([2.5e-4])  # 1e-3 learning rate
-            fi = random.choice([20000]) # 3000 freeze interval
+            fi = random.choice([10000]) # 3000 freeze interval
             nh = random.choice([4]) # 8 num hidden
             reg = random.choice([5e-4]) # 1e-4 regularization
             print 'run number: {}'.format(idx)

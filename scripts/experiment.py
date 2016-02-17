@@ -73,6 +73,7 @@ class Experiment(object):
         """
         state = self.mdp.get_start_state()
         action = self.agent.start_episode(state)
+        reward = 0
         for step in xrange(self.max_steps):
 
             # get the next state and reward
@@ -80,12 +81,15 @@ class Experiment(object):
 
             # if episode has ended, then break
             if terminal:
-                self.agent.finish_episode(next_state, reward)
                 break
 
             # otherwise, inform the agent and get a new action
             action = self.agent.step(next_state, reward)
             state = next_state
+        
+        # store this experience as a terminal one regardless of the loop exit condition
+        # because either way the next state will break continuity
+        self.agent.finish_episode(next_state, reward)
 
     def step(self, state, action):
         """

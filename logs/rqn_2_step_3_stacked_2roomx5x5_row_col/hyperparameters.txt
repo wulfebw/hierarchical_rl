@@ -1,0 +1,10 @@
+freeze_interval: 10000
+num_hidden: 4
+regularization: 0.0005
+num_parameters: 768
+actions_until_min: 1000000
+learning_rate: 0.00025
+batch_size: 100
+update_rule: adam
+discount: 1
+replay_memory_capacity: 50000

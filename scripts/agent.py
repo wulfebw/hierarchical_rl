@@ -380,9 +380,10 @@ class RecurrentNeuralAgent(Agent):
     def finish_episode(self, next_state, reward):
         """
         :description: perform tasks at the end of episode. We don't store the next_state value
-            because the previous state must have been a terminal one.
+            because the previous state must have been a terminal one. It's in the method
+            definition to stay consistent with the other replay memory implementation.
         """
-        self.replay_memory.store(self.prev_state, self.prev_action, reward, terminal=True)
+        self.replay_memory.store(self.prev_state, self.prev_action, reward, True)
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):

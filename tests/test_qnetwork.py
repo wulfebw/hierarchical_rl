@@ -243,7 +243,8 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
-            network = qnetwork.QNetwork(input_shape=10+10, batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            network = qnetwork.QNetwork(input_shape=2 * (room_size * 
+                num_rooms), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 200
             epoch_length = 50
             test_epoch_length = 0
@@ -258,9 +259,9 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             e.run()
 
         for idx in range(20):
-            lr = random.choice([1e-3])  # learning rate
+            lr = random.choice([1e-4])  # learning rate
             fi = random.choice([10000]) # freeze interval
-            nh = random.choice([8]) # num hidden
+            nh = random.choice([4]) # num hidden
             reg = random.choice([5e-4]) # regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
@@ -308,7 +309,7 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
 
         for idx in range(25):
             lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
-            fi = 3000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
+            fi = 10000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
             nh = 32 #int(np.random.uniform(8, 32)) # num hidden
             reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
             print 'run number: {}'.format(idx)

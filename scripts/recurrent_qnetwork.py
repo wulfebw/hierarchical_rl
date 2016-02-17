@@ -71,9 +71,9 @@ class RecurrentQNetwork(object):
         lasagne.random.set_rng(self.rng)
 
         # 1. build the q network and target q network
-        self.l_out = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.l_out = self.build_stacked_network(input_shape, self.sequence_length, batch_size, self.num_actions)
 
-        self.next_l_out = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.next_l_out = self.build_stacked_network(input_shape, self.sequence_length, batch_size, self.num_actions)
         self.reset_target_network()
 
         # 2. initialize theano symbolic variables used for compiling functions
@@ -195,11 +195,19 @@ class RecurrentQNetwork(object):
             num_units=self.num_hidden, 
             #mask_input=l_mask, 
             grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_lstm3 = lasagne.layers.LSTMLayer(
+            l_lstm2, 
+            num_units=self.num_hidden, 
+            #mask_input=l_mask, 
+            grad_clipping=10,
             only_return_final=True
         )
         
         l_out = lasagne.layers.DenseLayer(
-            l_lstm2,
+            l_lstm3,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
