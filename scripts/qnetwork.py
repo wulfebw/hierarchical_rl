@@ -149,13 +149,13 @@ class QNetwork(object):
             shape=(batch_size, input_shape)
         )
 
-        # l_hidden1 = lasagne.layers.DenseLayer(
-        #     l_in,
-        #     num_units=self.num_hidden,
-        #     nonlinearity=lasagne.nonlinearities.rectify,
-        #     W=lasagne.init.HeNormal(),
-        #     b=lasagne.init.Constant(.1)
-        # )
+        l_hidden1 = lasagne.layers.DenseLayer(
+            l_in,
+            num_units=self.num_hidden,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(.1)
+        )
 
         # l_hidden2 = lasagne.layers.DenseLayer(
         #     l_hidden1,
@@ -174,7 +174,7 @@ class QNetwork(object):
         # )
 
         l_out = lasagne.layers.DenseLayer(
-            l_in,
+            l_hidden1,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
