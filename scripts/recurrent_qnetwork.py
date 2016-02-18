@@ -47,6 +47,10 @@ class RecurrentQNetwork(object):
     def get_params(self):
         return lasagne.layers.helper.get_all_param_values(self.l_out)
 
+    def set_params(self, params):
+        lasagne.layers.set_all_param_values(self.l_out, params)
+        self.reset_target_network()
+    
     def reset_target_network(self):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
@@ -71,9 +75,9 @@ class RecurrentQNetwork(object):
         lasagne.random.set_rng(self.rng)
 
         # 1. build the q network and target q network
-        self.l_out = self.build_stacked_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.l_out = self.build_stacked_concat_network(input_shape, self.sequence_length, batch_size, self.num_actions)
 
-        self.next_l_out = self.build_stacked_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.next_l_out = self.build_stacked_concat_network(input_shape, self.sequence_length, batch_size, self.num_actions)
         self.reset_target_network()
 
         # 2. initialize theano symbolic variables used for compiling functions
@@ -195,9 +199,55 @@ class RecurrentQNetwork(object):
             num_units=self.num_hidden, 
             #mask_input=l_mask, 
             grad_clipping=10,
+            only_return_final=True
+        )
+
+        
+        # l_lstm3 = lasagne.layers.LSTMLayer(
+        #     l_lstm2, 
+        #     num_units=self.num_hidden, 
+        #     #mask_input=l_mask, 
+        #     grad_clipping=10,
+        #     only_return_final=True
+        # )
+        
+        l_out = lasagne.layers.DenseLayer(
+            l_lstm2,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0)
+        )
+
+        return l_out
+
+
+    def build_stacked_concat_network(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape)
+        )
+
+        # l_mask = lasagne.layers.InputLayer(
+        #     shape=(batch_size, sequence_length)
+        # )
+
+        l_lstm1 = lasagne.layers.LSTMLayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            #mask_input=l_mask, 
+            grad_clipping=10,
             only_return_final=False
         )
 
+        l_lstm2 = lasagne.layers.LSTMLayer(
+            l_lstm1, 
+            num_units=self.num_hidden, 
+            #mask_input=l_mask, 
+            grad_clipping=10,
+            only_return_final=False
+        )
+        
         l_lstm3 = lasagne.layers.LSTMLayer(
             l_lstm2, 
             num_units=self.num_hidden, 
@@ -205,9 +255,22 @@ class RecurrentQNetwork(object):
             grad_clipping=10,
             only_return_final=True
         )
-        
+
+        # use the output from all of the stacked lstms as input to the output layer
+        l_slice1 = lasagne.layers.SliceLayer(l_lstm1, -1, 1)
+        l_slice2 = lasagne.layers.SliceLayer(l_lstm2, -1, 1)
+        l_merge = lasagne.layers.ConcatLayer([l_slice1, l_slice2, l_lstm3])
+
+        l_hidden1 = lasagne.layers.DenseLayer(
+            l_merge,
+            num_units=self.num_hidden,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(.1)
+        )
+
         l_out = lasagne.layers.DenseLayer(
-            l_lstm3,
+            l_hidden1,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
