@@ -5,6 +5,8 @@
 import collections 
 import datetime
 import lasagne
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -150,6 +152,7 @@ class Logger(object):
         plt.xlabel('Updates')
         plt.ylabel(name)
         plt.savefig(filepath)
+        plt.close()
 
     def record_weights(self, weights, epoch):
         """
@@ -210,6 +213,7 @@ class Logger(object):
         plt.scatter(np.arange(len(self.state_values['min'])), self.state_values['min'], c='g')
         plt.scatter(np.arange(len(self.state_values['start'])), self.state_values['start'], marker='*')
         plt.savefig(filepath)
+        plt.close()
 
 
 class NeuralLogger(Logger):

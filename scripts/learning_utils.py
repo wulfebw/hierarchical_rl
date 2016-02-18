@@ -1,6 +1,9 @@
 
+import glob
 from math import sqrt, ceil
+import matplotlib.pyplot as plt
 import numpy as np
+import os
 import random
 
 def sample(probs):
@@ -43,35 +46,73 @@ def weightedRandomChoice(weightDict):
     raise Exception('Should not reach here')
 
 def visualize_grid(Xs, ubound=255.0, padding=1):
-  """
-  Reshape a 4D tensor of image data to a grid for easy visualization.
+    """
+    Reshape a 4D tensor of image data to a grid for easy visualization.
 
-  Inputs:
-  - Xs: Data of shape (N, H, W, C)
-  - ubound: Output grid will have values scaled to the range [0, ubound]
-  - padding: The number of blank pixels between elements of the grid
-  """
-  (N, H, W, C) = Xs.shape
-  grid_size = int(ceil(sqrt(N)))
-  grid_height = H * grid_size + padding * (grid_size - 1)
-  grid_width = W * grid_size + padding * (grid_size - 1)
-  grid = np.zeros((grid_height, grid_width, C))
-  next_idx = 0
-  y0, y1 = 0, H
-  for y in xrange(grid_size):
-    x0, x1 = 0, W
-    for x in xrange(grid_size):
-      if next_idx < N:
-        img = Xs[next_idx]
-        low, high = np.min(img), np.max(img)
-        grid[y0:y1, x0:x1] = ubound * (img - low) / (high - low)
-        # grid[y0:y1, x0:x1] = Xs[next_idx]
-        next_idx += 1
-      x0 += W + padding
-      x1 += W + padding
-    y0 += H + padding
-    y1 += H + padding
-  # grid_max = np.max(grid)
-  # grid_min = np.min(grid)
-  # grid = ubound * (grid - grid_min) / (grid_max - grid_min)
-  return grid
+    Inputs:
+    - Xs: Data of shape (N, H, W, C)
+    - ubound: Output grid will have values scaled to the range [0, ubound]
+    - padding: The number of blank pixels between elements of the grid
+    """
+    (N, H, W, C) = Xs.shape
+    grid_size = int(ceil(sqrt(N)))
+    grid_height = H * grid_size + padding * (grid_size - 1)
+    grid_width = W * grid_size + padding * (grid_size - 1)
+    grid = np.zeros((grid_height, grid_width, C))
+    next_idx = 0
+    y0, y1 = 0, H
+    for y in xrange(grid_size):
+        x0, x1 = 0, W
+        for x in xrange(grid_size):
+            if next_idx < N:
+                img = Xs[next_idx]
+                low, high = np.min(img), np.max(img)
+                grid[y0:y1, x0:x1] = ubound * (img - low) / (high - low)
+                # grid[y0:y1, x0:x1] = Xs[next_idx]
+                next_idx += 1
+            x0 += W + padding
+            x1 += W + padding
+        y0 += H + padding
+        y1 += H + padding
+    # grid_max = np.max(grid)
+    # grid_min = np.min(grid)
+    # grid = ubound * (grid - grid_min) / (grid_max - grid_min)
+    return grid
+
+def get_run_directory(filepath):
+    return filepath[:filepath.rindex('/')]
+
+def get_value_array_from_value_image_file(filepath):
+    lines = None
+    with open(filepath, 'rb') as f:
+        lines = f.readlines()
+        lines = [line.replace('\n', '').split(' ') for line in lines]
+        lines = [[val for val in line if val != ''] for line in lines]
+        for line in lines:
+            for idx, val in enumerate(line):
+                if val == 'E':
+                    line[idx] = 1
+                if val == 'S':
+                    line[idx] = -1
+        lines = [[float(val) for val in line] for line in lines]
+
+    return np.array(lines)
+
+def make_heat_maps():
+    logs_dir = '../logs/rqn_2_step_3_Stacked_2roomx5x5_row_col_relu_after_merge'
+    pattern = os.path.join(logs_dir, '*value_image.txt')
+    filepaths = glob.glob(pattern)
+    for filepath in filepaths:  
+        run_dir = get_run_directory(filepath)
+        output_filepath = os.path.join(run_dir, 'value_heatmap.png')
+        value_array = get_value_array_from_value_image_file(filepath)
+        heatmap = plt.pcolormesh(value_array)
+        plt.colorbar()
+        plt.savefig(output_filepath)
+        plt.close()
+
+
+
+if __name__ =='__main__':
+    make_heat_maps()
+
