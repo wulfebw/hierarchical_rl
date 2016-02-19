@@ -218,5 +218,9 @@ class SequenceReplayMemory(object):
             next_states[count] = self.states.take(transition_indices, axis=0, mode='wrap')
             count += 1
 
-        return states, actions, rewards, next_states, terminals
+        return states.astype(theano.config.floatX), \
+               actions, \
+               rewards.astype(theano.config.floatX), \
+               next_states.astype(theano.config.floatX), \
+               terminals
 

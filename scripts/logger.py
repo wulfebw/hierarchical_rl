@@ -246,6 +246,7 @@ class NeuralLogger(Logger):
         if not self.logging:
             return
 
+        self.epoch += 1
         if self.log_dir is None:
             self.create_log_dir()
 

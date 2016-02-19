@@ -119,7 +119,7 @@ class RecurrentQNetwork(object):
         quadratic_part = T.minimum(abs(diff), 1.0)
         linear_part = abs(diff) - quadratic_part
         loss = 0.5 * quadratic_part ** 2 + linear_part
-        loss = T.sum(loss) + self.regularization * regularize_network_params(self.l_out, l2)
+        loss = T.mean(loss) + self.regularization * regularize_network_params(self.l_out, l2)
         
         # 5. formulate the symbolic updates 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
