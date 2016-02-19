@@ -88,28 +88,26 @@ def get_value_array_from_value_image_file(filepath):
         lines = f.readlines()
         lines = [line.replace('\n', '').split(' ') for line in lines]
         lines = [[val for val in line if val != ''] for line in lines]
-        for line in lines:
-            for idx, val in enumerate(line):
-                if val == 'E':
-                    line[idx] = 1
-                if val == 'S':
-                    line[idx] = -1
         lines = [[float(val) for val in line] for line in lines]
+        lines = np.array(lines)
+    return lines
 
-    return np.array(lines)
+def make_heat_map(filepath, epoch):
+    # convert value image to numeric array
+    value_array = get_value_array_from_value_image_file(filepath)
+    if value_array is None:
+        print 'Value image could not be converted to heatmap'
+        return
 
-def make_heat_maps():
-    logs_dir = '../logs/rqn_2_step_3_Stacked_2roomx5x5_row_col_relu_after_merge'
-    pattern = os.path.join(logs_dir, '*value_image.txt')
-    filepaths = glob.glob(pattern)
-    for filepath in filepaths:  
-        run_dir = get_run_directory(filepath)
-        output_filepath = os.path.join(run_dir, 'value_heatmap.png')
-        value_array = get_value_array_from_value_image_file(filepath)
-        heatmap = plt.pcolormesh(value_array)
-        plt.colorbar()
-        plt.savefig(output_filepath)
-        plt.close()
+    # determine output filepath
+    run_dir = get_run_directory(filepath)
+    output_filepath = os.path.join(run_dir, 'heatmaps', 'value_heatmap_{}.png'.format(epoch))
+
+    # create and save heatmap
+    heatmap = plt.pcolormesh(value_array)
+    plt.colorbar()
+    plt.savefig(output_filepath)
+    plt.close()
 
 def load_params(filepath):
     params = np.load(filepath)['params']

@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 import agent
 import experiment
+import learning_utils
 import mdps
 import policy
 import recurrent_qnetwork
@@ -139,20 +140,20 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             sequence_length = 2
             num_actions = len(mdp.get_actions(None))
             mean_state_values = mdp.get_mean_state_values()
-            batch_size = 100
+            batch_size = 1000
             network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * (room_size * 
                 num_rooms), sequence_length=sequence_length, batch_size=batch_size, 
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
-                freeze_interval, rng=None)
-            num_epochs = 200
-            epoch_length = 50
+                freeze_interval, rng=None)            
+            num_epochs = 20 
+            epoch_length = 20 
             test_epoch_length = 0
-            max_steps = (room_size * num_rooms)**2
+            max_steps = 2 * (room_size * num_rooms)**2
             epsilon_decay = (num_epochs * epoch_length * max_steps)
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.SequenceReplayMemory(input_shape=2*(room_size * num_rooms),
-                    sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=100000)
             a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, 
                     mean_state_values=mean_state_values, logging=True)
             run_tests = False
@@ -161,10 +162,10 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             e.run()
 
         for idx in range(1):
-            lr = random.choice([2.5e-4])  # 1e-3 learning rate
-            fi = random.choice([10000]) # 3000 freeze interval
-            nh = random.choice([4]) # 8 num hidden
-            reg = random.choice([5e-4]) # 1e-4 regularization
+            lr = random.choice([1e-4]) 
+            fi = random.choice([20000]) 
+            nh = random.choice([4]) 
+            reg = random.choice([5e-4]) 
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)

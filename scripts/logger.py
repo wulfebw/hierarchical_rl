@@ -56,6 +56,7 @@ class Logger(object):
         self.log_dir = None
         self.logging = logging
         self.verbose = verbose
+        self.epoch = 0
 
     def log_action(self, action):
         self.actions.append(action)
@@ -85,6 +86,7 @@ class Logger(object):
         if not self.logging:
             return
 
+        self.epoch += 1
         if self.log_dir is None:
             self.create_log_dir()
 
@@ -167,11 +169,22 @@ class Logger(object):
         """
         :description: creates a directory in which to log information for the current agent
         """
+        # make the main logging directory
         dir_name = '{}_{}'.format(self.agent_name, datetime.datetime.now().isoformat())
         dir_path = os.path.join(LOGGING_DIRECTORY, dir_name)
         os.mkdir(dir_path)
         self.log_dir = dir_path
 
+        # make a subdirectory for the network parameter files
+        params_dir_path = os.path.join(self.log_dir, 'params')
+        os.mkdir(params_dir_path)
+        self.params_dir = params_dir_path
+        
+        # make a subdirectory for the heatmaps
+        heatmap_dir_path = os.path.join(self.log_dir, 'heatmaps')
+        os.mkdir(heatmap_dir_path)
+        self.heatmap_dir = heatmap_dir_path
+        
     def log_value_string(self, value_string):
         """
         :description: prints a string to a file. The string, when formatted, gives the values of different states in the mdp.
@@ -183,6 +196,8 @@ class Logger(object):
         filepath = os.path.join(self.log_dir, filename)
         with open(filepath, 'wb') as f:
             f.write(value_string)
+
+        learning_utils.make_heat_map(filepath, self.epoch)
 
     def log_values(self, V):
         """
@@ -260,7 +275,7 @@ class NeuralLogger(Logger):
 
     def save_params(self, params, epoch):
         filename = 'network_file_epoch_{}.save'.format(epoch)
-        filepath = os.path.join(self.log_dir, filename)
+        filepath = os.path.join(self.params_dir, filename)
         np.savez(filepath, params=params)
 
     def plot_weights(self, params, epoch):
