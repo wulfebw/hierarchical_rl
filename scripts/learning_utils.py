@@ -111,7 +111,10 @@ def make_heat_maps():
         plt.savefig(output_filepath)
         plt.close()
 
-
+def load_params(filepath):
+    params = np.load(filepath)['params']
+    return params
+        
 
 if __name__ =='__main__':
     make_heat_maps()

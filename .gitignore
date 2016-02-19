@@ -62,7 +62,6 @@ docs/_build/
 # emacs
 *~
 
-# other
-.png
-.npz
-.save
+# compile
+/compile
+
