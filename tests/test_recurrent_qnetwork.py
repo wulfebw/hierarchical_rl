@@ -11,6 +11,7 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'scripts')))
 
 import agent
+import aws_s3_utility
 import experiment
 import learning_utils
 import mdps
@@ -129,7 +130,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
 
-        def run(learning_rate, freeze_interval, num_hidden, reg):
+        def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps):
             room_size = 5
             num_rooms = 2
             print 'building mdp...'
@@ -138,25 +139,25 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             mdp.EXIT_REWARD = 1
             mdp.MOVE_REWARD = -0.1
             discount = 1
-            sequence_length = 2
+            sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
-            batch_size = int(2**8)
+            batch_size = int(2**6)
             print 'building network...'
             network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * (room_size * 
                 num_rooms), sequence_length=sequence_length, batch_size=batch_size, 
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
                 freeze_interval, rng=None)            
-            num_epochs = 200
-            epoch_length = 20
+            num_epochs = 100
+            epoch_length = 10
             test_epoch_length = 0
-            max_steps = 2 * (room_size * num_rooms)**2
-            epsilon_decay = (num_epochs * epoch_length * max_steps)
+            max_steps = 2 * (room_size * num_rooms) ** 2
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             print 'building policy...'
-            p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
+            p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
             rm = replay_memory.SequenceReplayMemory(input_shape=2*(room_size * num_rooms),
-                            sequence_length=sequence_length, batch_size=batch_size, capacity=1000000)
+                            sequence_length=sequence_length, batch_size=batch_size, capacity=100000)
             print 'building agent...'
             a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             run_tests = False
@@ -165,15 +166,26 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 max_steps, run_tests, value_logging=True)
             print 'running experiment...'
             e.run()
+            
+            ak = ''
+            sk = ''
+            bucket = 'hierarchical'
+            try:
+                aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
+                aws_util.upload_directory(e.agent.logger.log_dir)
+            except Exception as e:
+                print 'error uploading to s3: {}'.format(e)
 
-        for idx in range(20):
-            lr = random.choice([5e-3, 1e-3, 5e-4, 1e-4]) 
-            fi = random.choice([5e3, 1e4, 5e4, 1e5]) 
-            nh = random.choice([2, 4, 8, 16]) 
+        for idx in range(50):
+            lr = random.choice([1e-2, 5e-3, 1e-3, 5e-4]) 
+            fi = random.choice([1e3, 2.5e3, 5e3]) 
+            nh = random.choice([2, 4, 8, 12]) 
             reg = random.choice([1e-4, 5e-4]) 
+            seq_len = random.choice([2 , 3, 4])
+            eps = random.choice([.2, .3, .4, .5, .6])
             print 'run number: {}'.format(idx)
-            print lr, fi, nh, reg
-            run(lr, fi, nh, reg)
+            print 'learning_rate: {}\tfrozen_interval: {}\tnum_hidden: {}\treg: {}\tsequence_length: {}\teps: {}'.format(lr,fi,nh, reg, seq_len, eps)
+            run(lr, fi, nh, reg, seq_len, eps)
 
 if __name__ == '__main__':
     unittest.main()
