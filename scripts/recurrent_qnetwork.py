@@ -330,6 +330,7 @@ class RecurrentQNetwork(object):
             num_units=self.num_hidden, 
             #mask_input=l_mask, 
             grad_clipping=10,
+            unroll_scan=True,
             only_return_final=False
         )
 
@@ -338,26 +339,27 @@ class RecurrentQNetwork(object):
             num_units=self.num_hidden, 
             #mask_input=l_mask, 
             grad_clipping=10,
-            only_return_final=False
-        )
-        
-        l_lstm3 = lasagne.layers.LSTMLayer(
-            l_lstm2, 
-            num_units=self.num_hidden, 
-            #mask_input=l_mask, 
-            grad_clipping=10,
+            unroll_scan=True,
             only_return_final=True
         )
+        
+        # l_lstm3 = lasagne.layers.LSTMLayer(
+        #     l_lstm2, 
+        #     num_units=self.num_hidden, 
+        #     #mask_input=l_mask, 
+        #     grad_clipping=10,
+        #     only_return_final=True
+        # )
 
         # use the output from all of the stacked lstms as input to the output layer
         l_slice1 = lasagne.layers.SliceLayer(l_lstm1, -1, 1)
-        l_slice2 = lasagne.layers.SliceLayer(l_lstm2, -1, 1)   
-        l_merge = lasagne.layers.ConcatLayer([l_slice1, l_slice2, l_lstm3])
-
+        # l_slice2 = lasagne.layers.SliceLayer(l_lstm2, -1, 1)   
+        # l_merge = lasagne.layers.ConcatLayer([l_slice1, l_slice2, l_lstm3])
+        l_merge = lasagne.layers.ConcatLayer([l_slice1, l_lstm2])
 
         l_hidden1 = lasagne.layers.DenseLayer(
             l_merge,
-            num_units=self.num_hidden,
+            num_units=output_shape,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(.1)

@@ -167,8 +167,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'running experiment...'
             e.run()
             
-            ak = ''
-            sk = ''
+            ak = 'AKIAI5JBNV3Z4FENUHYQ'
+            sk = 'wmff5H7Spe37MxjLh5Nb3rqAOecoOf7nYxfkKtw4'
             bucket = 'hierarchical'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
@@ -179,7 +179,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
         for idx in range(50):
             lr = random.choice([1e-2, 5e-3, 1e-3, 5e-4]) 
             fi = random.choice([1e3, 2.5e3, 5e3]) 
-            nh = random.choice([2, 4, 8, 12]) 
+            nh = random.choice([4, 8, 12]) 
             reg = random.choice([1e-4, 5e-4]) 
             seq_len = random.choice([2 , 3, 4])
             eps = random.choice([.2, .3, .4, .5, .6])
