@@ -360,7 +360,7 @@ class RecurrentQNetwork(object):
         l_hidden1 = lasagne.layers.DenseLayer(
             l_merge,
             num_units=output_shape,
-            nonlinearity=lasagne.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.leaky_rectify,
             W=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(.1)
         )
