@@ -23,12 +23,10 @@ class TestNeuralAgent(unittest.TestCase):
         mdp.MOVE_REWARD = -0.1
         discount = mdp.get_discount()
         num_actions = len(mdp.get_actions(None))
-        mean_state_values = mdp.get_mean_state_values()
         network = qnetwork.QNetwork(input_shape=2, batch_size=1, num_actions=4, num_hidden=10, discount=discount, learning_rate=1e-3, update_rule='sgd', freeze_interval=10000, rng=None)
         p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, 10000)
         rm = replay_memory.ReplayMemory(1)
-        a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
-                mean_state_values=mean_state_values, logging=False)
+        a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, logging=False)
         num_epochs = 2
         epoch_length = 10
         test_epoch_length = 0

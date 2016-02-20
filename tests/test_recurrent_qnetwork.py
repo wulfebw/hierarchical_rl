@@ -140,16 +140,15 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             discount = 1
             sequence_length = 2
             num_actions = len(mdp.get_actions(None))
-            mean_state_values = mdp.get_mean_state_values()
-            batch_size = int(2**10)
+            batch_size = int(2**8)
             print 'building network...'
             network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * (room_size * 
                 num_rooms), sequence_length=sequence_length, batch_size=batch_size, 
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
                 freeze_interval, rng=None)            
-            num_epochs = 10
-            epoch_length = 100 
+            num_epochs = 8
+            epoch_length = 10
             test_epoch_length = 0
             max_steps = 2 * (room_size * num_rooms)**2
             epsilon_decay = (num_epochs * epoch_length * max_steps)
@@ -157,10 +156,9 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             print 'building replay memory...'
             rm = replay_memory.SequenceReplayMemory(input_shape=2*(room_size * num_rooms),
-                                                    sequence_length=sequence_length, batch_size=batch_size, capacity=1000000)
+                            sequence_length=sequence_length, batch_size=batch_size, capacity=10000)
             print 'building agent...'
-            a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, 
-                    mean_state_values=mean_state_values, logging=True)
+            a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             run_tests = False
             print 'building experiment...'
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, 

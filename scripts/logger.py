@@ -51,12 +51,13 @@ class Logger(object):
         self.losses = []
         self.states = []
         self.updates = 0
+        self.epoch = 0
         self.state_values = collections.defaultdict(lambda: [])
         self.weights = None
         self.log_dir = None
         self.logging = logging
         self.verbose = verbose
-        self.epoch = 0
+
 
     def log_action(self, action):
         self.actions.append(action)

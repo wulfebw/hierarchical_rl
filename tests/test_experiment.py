@@ -110,7 +110,7 @@ class TestExperimentMazeSolving(TestExperiment):
         num_actions = len(mdp.get_actions(None))
         discount = 1
         exploration_prob = .5
-        step_size = 1
+        step_size = .1
         a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
         num_epochs = 10
         epoch_length = 200

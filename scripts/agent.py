@@ -161,11 +161,22 @@ class NeuralAgent(Agent):
     """
     :description: A class that wraps a network so it may more easily interact with an experiment. 
     """
-    def __init__(self, network, policy, replay_memory, mean_state_values, logging=False):
+
+    def __init__(self, network, policy, replay_memory, logging=False):
+        """
+        :type network: a network class (see e.g., qnetwork.py)
+        :param network: the network the agent uses to evaluate states
+
+        :type policy: a policy class (see policy.py)
+        :param policy: a class that decides which action to take given the values of those actions
+
+        :type replay_memory: replay memory class (see replay_memory.py)
+        :param replay_memory: replay memory used to store dataset as it is gathered.
+        """
+
         self.network = network
         self.policy = policy
         self.replay_memory = replay_memory
-        self.mean_state_values = mean_state_values
         self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
         self.logger.log_hyperparameters(network, policy, replay_memory)
 
@@ -212,7 +223,7 @@ class NeuralAgent(Agent):
         :description: collects a minibatch of experiences and passes them to the network to train
         """
         # wait until replay memory has samples
-        if self.replay_memory.is_empty():
+        if not self.replay_memory.is_ready_to_sample():
             return
 
         # collect minibatch
@@ -271,31 +282,24 @@ class NeuralAgent(Agent):
         """
         :description: converts a state from an extenarl format to an internal one
         """
-        # nothing
-        # formatted_state = np.array(state)
-
-        # fc
+        # hard-coded values for state size currently, need to create a Converter class
         row = np.zeros(10)
         row[state[0]] = 1
         col = np.zeros(10)
         col[state[1]] = 1
         formatted_state = np.hstack((row, col))
 
-        # conv
-        # formatted_state = np.zeros((1,10,10))
-        # formatted_state[0, state[0], state[1]] = 1
-
         return formatted_state
 
 class RecurrentNeuralAgent(Agent):
     """
-    :description: A class that wraps a network so it may more easily interact with an experiment. 
+    :description: A class that wraps a recuurent network so it may more easily 
+        interact with an experiment. 
     """
-    def __init__(self, network, policy, replay_memory, mean_state_values, logging=False):
+    def __init__(self, network, policy, replay_memory, logging=False):
         self.network = network
         self.policy = policy
         self.replay_memory = replay_memory
-        self.mean_state_values = mean_state_values
         self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
         self.logger.log_hyperparameters(network, policy, replay_memory)
 
@@ -404,19 +408,11 @@ class RecurrentNeuralAgent(Agent):
         """
         :description: converts a state from an extenarl format to an internal one
         """
-        # fc
-        # formatted_state = np.zeros((5,5))
-        # formatted_state[state[0], state[1]] = 1
-        # formatted_state = formatted_state.flatten()
-
+        # hard-coded values for state size currently, need to create a Converter class
         row = np.zeros(10)
         row[state[0]] = 1
         col = np.zeros(10)
         col[state[1]] = 1
         formatted_state = np.hstack((row, col))
-
-        # conv
-        # formatted_state = np.zeros((1,10,10))
-        # formatted_state[0, state[0], state[1]] = 1
 
         return formatted_state

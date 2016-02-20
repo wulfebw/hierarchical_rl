@@ -32,7 +32,8 @@ class TestQNetworkConstruction(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
     def test_qnetwork_constructor_rmsprop(self):
         input_shape = 2
@@ -45,7 +46,8 @@ class TestQNetworkConstruction(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
     def test_qnetwork_constructor_adam(self):
         input_shape = 2
@@ -58,7 +60,8 @@ class TestQNetworkConstruction(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
 class TestQNetworkGetQValues(unittest.TestCase):
 
@@ -73,7 +76,8 @@ class TestQNetworkGetQValues(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         state = np.array([1,1])
         q_values = network.get_q_values(state) 
@@ -92,7 +96,8 @@ class TestQNetworkGetQValues(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         states = [[1,1],[-1,-1],[-1,1],[1,-1]]
         for state in states:
@@ -112,7 +117,8 @@ class TestQNetworkGetParams(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         params = network.get_params()
         self.assertTrue(params is not None)
@@ -132,7 +138,8 @@ class TestQNetworkTrain(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         states = np.zeros((1,2))
         actions = np.zeros((1,1), dtype='int32')
@@ -156,7 +163,8 @@ class TestQNetworkTrain(unittest.TestCase):
         freeze_interval = 1000
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         values = np.array(lasagne.layers.helper.get_all_param_values(network.l_out)) * 0
         lasagne.layers.helper.set_all_param_values(network.l_out, values)
@@ -184,7 +192,8 @@ class TestQNetworkTrain(unittest.TestCase):
         freeze_interval = 100
         regularization = 0
         rng = None
-        network = qnetwork.QNetwork(input_shape, batch_size, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
+        num_hidden_layers = 1
+        network = qnetwork.QNetwork(input_shape, batch_size, num_hidden_layers, num_actions, num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
 
         rm = replay_memory.ReplayMemory(batch_size)
         # state 0 to state 1 reward +1
@@ -241,24 +250,22 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             mdp.MOVE_REWARD = -0.1
             discount = 1
             num_actions = len(mdp.get_actions(None))
-            mean_state_values = mdp.get_mean_state_values()
             batch_size = 100
             network = qnetwork.QNetwork(input_shape=2 * (room_size * 
-                num_rooms), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
-            num_epochs = 200
-            epoch_length = 50
+                num_rooms), batch_size=batch_size, num_hidden_layers=10, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            num_epochs = 2
+            epoch_length = 1
             test_epoch_length = 0
-            max_steps = (room_size * num_rooms) ** 2 
+            max_steps = 2 * (room_size * num_rooms) ** 2 
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size, capacity=50000)
-            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
-                    mean_state_values=mean_state_values, logging=True)
+            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-        for idx in range(20):
+        for idx in range(2):
             lr = random.choice([1e-4])  # learning rate
             fi = random.choice([10000]) # freeze interval
             nh = random.choice([4]) # num hidden
@@ -290,7 +297,6 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
             mdp.MOVE_REWARD = 0
             discount = .95
             num_actions = len(mdp.get_actions(None))
-            mean_state_values = mdp.get_mean_state_values()
             batch_size = 50
             network = qnetwork.ConvQNetwork(input_shape=(10,10), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             
@@ -302,8 +308,7 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size)
-            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, 
-                    mean_state_values=mean_state_values, logging=True)
+            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
@@ -316,14 +321,6 @@ class TestQNetworkFullOperation2DState(unittest.TestCase):
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)
 
-        states = []
-        for ridx in range(5):
-            for cidx in range(5):
-                states.append(np.array((ridx, cidx)))
-
-        for state in states:
-            q_values = network.get_q_values(state)
-            self.assertAlmostEqual(q_values.tolist(), np.ones(num_actions))
 
 if __name__ == '__main__':
     unittest.main()

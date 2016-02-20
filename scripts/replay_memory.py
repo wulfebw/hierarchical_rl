@@ -3,8 +3,8 @@ import numpy as np
 import random
 import theano
 
-DEFAULT_CAPACITY = 1000
-SAMPLING_CAPACITY_FACTOR = 10.
+DEFAULT_CAPACITY = 10000
+SAMPLING_CAPACITY_FACTOR = 100.
 
 class ReplayMemory(object):
 
