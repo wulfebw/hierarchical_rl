@@ -147,8 +147,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
                 freeze_interval, rng=None)            
-            num_epochs = 8
-            epoch_length = 10
+            num_epochs = 200
+            epoch_length = 20
             test_epoch_length = 0
             max_steps = 2 * (room_size * num_rooms)**2
             epsilon_decay = (num_epochs * epoch_length * max_steps)
@@ -156,7 +156,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             print 'building replay memory...'
             rm = replay_memory.SequenceReplayMemory(input_shape=2*(room_size * num_rooms),
-                            sequence_length=sequence_length, batch_size=batch_size, capacity=10000)
+                            sequence_length=sequence_length, batch_size=batch_size, capacity=1000000)
             print 'building agent...'
             a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             run_tests = False
@@ -166,11 +166,11 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'running experiment...'
             e.run()
 
-        for idx in range(1):
-            lr = random.choice([1e-3]) 
-            fi = random.choice([5000]) 
-            nh = random.choice([4]) 
-            reg = random.choice([5e-4]) 
+        for idx in range(20):
+            lr = random.choice([5e-3, 1e-3, 5e-4, 1e-4]) 
+            fi = random.choice([5e3, 1e4, 5e4, 1e5]) 
+            nh = random.choice([2, 4, 8, 16]) 
+            reg = random.choice([1e-4, 5e-4]) 
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)
