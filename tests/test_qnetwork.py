@@ -12,6 +12,7 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'scripts')))
 
 import agent
+import aws_s3_utility
 import experiment
 import logger
 import mdps
@@ -242,8 +243,8 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
     def test_qnetwork_solves_small_mdp(self):
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
-            room_size = 5
-            num_rooms = 2
+            room_size = 3
+            num_rooms = 3
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
@@ -251,12 +252,11 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             discount = 1
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
-            network = qnetwork.QNetwork(input_shape=2 * (room_size * 
-                num_rooms), batch_size=batch_size, num_hidden_layers=10, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
-            num_epochs = 2
-            epoch_length = 1
+            network = qnetwork.QNetwork(input_shape=2 * room_size, batch_size=batch_size, num_hidden_layers=2, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            num_epochs = 100
+            epoch_length = 50
             test_epoch_length = 0
-            max_steps = 2 * (room_size * num_rooms) ** 2 
+            max_steps = (room_size * num_rooms) ** 2 
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             rm = replay_memory.ReplayMemory(batch_size, capacity=50000)
@@ -265,10 +265,19 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
+            ak = ''
+            sk = ''
+            bucket = 'hierarchical'
+            try:
+                aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
+                aws_util.upload_directory(e.agent.logger.log_dir)
+            except Exception as e:
+                print 'error uploading to s3: {}'.format(e)
+
         for idx in range(2):
-            lr = random.choice([1e-4])  # learning rate
+            lr = random.choice([.001])  # learning rate
             fi = random.choice([10000]) # freeze interval
-            nh = random.choice([4]) # num hidden
+            nh = random.choice([8]) # num hidden
             reg = random.choice([5e-4]) # regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
