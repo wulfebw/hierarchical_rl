@@ -131,8 +131,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
     def test_qnetwork_solves_small_mdp(self):
 
         def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps):
-            room_size = 5
-            num_rooms = 2
+            room_size = 3
+            num_rooms = 3
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
@@ -141,23 +141,23 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             discount = 1
             sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
-            batch_size = int(2**6)
+            batch_size = 100
             print 'building network...'
-            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * (room_size * 
-                num_rooms), sequence_length=sequence_length, batch_size=batch_size, 
+            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size, 
+                sequence_length=sequence_length, batch_size=batch_size, 
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
                 freeze_interval, rng=None)            
             num_epochs = 100
-            epoch_length = 10
+            epoch_length = 50
             test_epoch_length = 0
-            max_steps = 2 * (room_size * num_rooms) ** 2
+            max_steps = (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
-            rm = replay_memory.SequenceReplayMemory(input_shape=2*(room_size * num_rooms),
-                            sequence_length=sequence_length, batch_size=batch_size, capacity=100000)
+            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
             print 'building agent...'
             a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
             run_tests = False
@@ -176,13 +176,13 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
-        for idx in range(50):
-            lr = random.choice([5e-4, 1e-4]) 
-            fi = random.choice([1e3, 2.5e3, 5e3]) 
-            nh = random.choice([4, 8, 12]) 
-            reg = random.choice([1e-4, 5e-4]) 
-            seq_len = random.choice([2 , 3, 4])
-            eps = random.choice([.3, .4, .5, .6])
+        for idx in range(5):
+            lr = random.choice([.001]) 
+            fi = random.choice([10000]) 
+            nh = random.choice([4]) 
+            reg = random.choice([5e-4]) 
+            seq_len = random.choice([2])
+            eps = random.choice([.5])
             print 'run number: {}'.format(idx)
             print 'learning_rate: {}\tfrozen_interval: {}\tnum_hidden: {}\treg: {}\tsequence_length: {}\teps: {}'.format(lr,fi,nh, reg, seq_len, eps)
             run(lr, fi, nh, reg, seq_len, eps)

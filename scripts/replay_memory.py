@@ -4,7 +4,7 @@ import random
 import theano
 
 DEFAULT_CAPACITY = 10000
-SAMPLING_CAPACITY_FACTOR = 10000.
+SAMPLING_CAPACITY_FACTOR = 100.
 
 class ReplayMemory(object):
 
@@ -76,7 +76,9 @@ class ReplayMemory(object):
             next_states[idx] = next_state
             terminals[idx] = terminal
 
-        return states, actions, rewards, next_states, terminals
+        return states.astype(theano.config.floatX), actions, \
+            rewards.astype(theano.config.floatX), \
+            next_states.astype(theano.config.floatX), terminals
 
 class SequenceReplayMemory(object):
     """

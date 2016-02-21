@@ -283,11 +283,18 @@ class NeuralAgent(Agent):
         :description: converts a state from an extenarl format to an internal one
         """
         # hard-coded values for state size currently, need to create a Converter class
-        row = np.zeros(10)
-        row[state[0]] = 1
-        col = np.zeros(10)
-        col[state[1]] = 1
+        row = np.zeros(3)
+        row[state[0] % 3] = 1
+        col = np.zeros(3)
+        col[state[1] % 3] = 1
         formatted_state = np.hstack((row, col))
+
+        # # hard-coded values for state size currently, need to create a Converter class
+        # row = np.zeros(10)
+        # row[state[0]] = 1
+        # col = np.zeros(10)
+        # col[state[1]] = 1
+        # formatted_state = np.hstack((row, col))
 
         return formatted_state
 
@@ -409,10 +416,18 @@ class RecurrentNeuralAgent(Agent):
         :description: converts a state from an extenarl format to an internal one
         """
         # hard-coded values for state size currently, need to create a Converter class
-        row = np.zeros(10)
-        row[state[0]] = 1
-        col = np.zeros(10)
-        col[state[1]] = 1
+        row = np.zeros(3)
+        row[state[0] % 3] = 1
+        col = np.zeros(3)
+        col[state[1] % 3] = 1
         formatted_state = np.hstack((row, col))
 
+        # # hard-coded values for state size currently, need to create a Converter class
+        # row = np.zeros(10)
+        # row[state[0]] = 1
+        # col = np.zeros(10)
+        # col[state[1]] = 1
+        # formatted_state = np.hstack((row, col))
+
+        
         return formatted_state

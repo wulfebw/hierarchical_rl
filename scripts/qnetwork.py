@@ -266,7 +266,7 @@ class QNetwork(object):
             l_hid = lasagne.layers.DenseLayer(
                 l_in,
                 num_units=self.num_hidden,
-                nonlinearity=lasagne.nonlinearities.rectify,
+                nonlinearity=lasagne.nonlinearities.leaky_rectify,
                 W=lasagne.init.HeNormal(),
                 b=lasagne.init.Constant(.1)
             )
@@ -439,7 +439,7 @@ class ConvQNetwork(object):
             filter_size=(1,1),
             stride = 1,
             pad = 'same',
-            nonlinearity=lasagne.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.leaky_rectify,
             W=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(.1)
         )
