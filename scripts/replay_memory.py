@@ -158,6 +158,9 @@ class SequenceReplayMemory(object):
         :param next_state: the next state to be inserted last into the sequence
         """
         sequence = np.zeros(self.sequence_shape, dtype=theano.config.floatX)
+
+        # if this is not the first state collected and the previous state was not terminal
+        # then we want to use the past sequence_len - 1 states in deciding the action
         if len(self.terminals) > 0 and self.terminals[-1] == False:
             indexes = np.arange(self.top - self.sequence_length + 1, self.top)
             sequence[0:self.sequence_length - 1] = self.states.take(indexes, axis=0, mode='wrap')

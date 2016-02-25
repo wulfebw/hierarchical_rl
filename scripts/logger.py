@@ -243,6 +243,7 @@ class NeuralLogger(Logger):
         self.weight_variances = []
         self.exploration_probs = []
 
+
     def log_epoch(self, epoch, network, policy):
         if not self.logging:
             return
@@ -255,6 +256,8 @@ class NeuralLogger(Logger):
             self.record_stat('actions', self.actions, epoch)
             self.record_stat('rewards', self.episode_rewards, epoch)
             self.record_stat('losses', self.losses, epoch)
+            if self.verbose:
+                print 'losses: {}\tepoch: {}'.format(np.mean(self.losses), epoch)
             self.record_weights(epoch, network)
             self.record_policy(epoch, policy)
         except Exception as e:

@@ -118,11 +118,17 @@ class RecurrentQNetwork(object):
         state = np.array([[1,2],[1,3]])
         network.get_q_values(state)
         """
-        states = np.zeros((self.batch_size, self.sequence_length, self.input_shape), dtype=theano.config.floatX)
-        states[0, :, :] = state
-        self.states_shared.set_value(states)
-        q_values = self._get_q_values()[0]
-        return q_values
+        # states = np.zeros((self.batch_size, self.sequence_length, self.input_shape), dtype=theano.config.floatX)
+        # states[0, :, :] = state
+        # self.states_shared.set_value(states)
+        # q_values = self._get_q_values()[0]
+
+        states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
+        states[0, 0, :] = state[0]
+        self.action_states_shared.set_value(states)
+        action_q_values, hidden_state = self._get_action_q_values()
+        self.hid_init.set_value(hidden_state)
+        return action_q_values
 
     def get_params(self):
         """
@@ -166,9 +172,9 @@ class RecurrentQNetwork(object):
         lasagne.random.set_rng(self.rng)
 
         # 1. build the q network and target q network
-        self.l_out = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.l_out, l_act_out, hid_state = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
 
-        self.next_l_out = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.next_l_out, _, _ = self.build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
         self.reset_target_network()
 
         # 2. initialize theano symbolic variables used for compiling functions
@@ -227,6 +233,24 @@ class RecurrentQNetwork(object):
         self._train = theano.function([], [loss, q_vals], updates=updates, givens=givens)
         self._get_q_values = theano.function([], q_vals, givens={states: self.states_shared})
 
+        # 7. create the function that gets q values given only a len 1 sequence
+        #    and uses the previous hidden state as init.
+        # these states will just be single dimension b/c this does not
+        # operate in batches and it does not operate over sequences
+        action_states = T.tensor3('action_states')
+        act_q_values = lasagne.layers.get_output(l_act_out, action_states)
+        act_hid_state = lasagne.layers.get_output(hid_state, action_states)
+        self.action_states_shared = theano.shared(np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX))
+        
+        # create a function that returns both the q values and the hidden states
+        # so that the hidden states can be stored and set next time these
+        # action q values are requested
+        self._get_action_q_values = theano.function(
+                [], 
+                [act_q_values, act_hid_state], 
+                givens={action_states: self.action_states_shared}
+        )
+
     def initialize_updates(self, update_rule, loss, params, learning_rate):
         if update_rule == 'adam':
             updates = lasagne.updates.adam(loss, params, learning_rate)
@@ -262,28 +286,63 @@ class RecurrentQNetwork(object):
         # )
 
 
-        forget_gate = lasagne.layers.Gate(b=lasagne.init.Constant(5.0))
-        l_lstm1 = lasagne.layers.LSTMLayer(
-            l_in, 
-            num_units=self.num_hidden, 
-            #mask_input=l_mask, 
-            forgetgate=forget_gate,
-            cell_init=lasagne.init.HeUniform(),
-            hid_init=lasagne.init.HeUniform(),
+        l_rnn1 = lasagne.layers.RecurrentLayer(
+            l_in,
+            num_units=self.num_hidden,
+            W_in_to_hid=lasagne.init.HeNormal(),
+            W_hid_to_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.),
+            nonlinearity=lasagne.nonlinearities.tanh,
             grad_clipping=10,
-            unroll_scan=True,
             only_return_final=True
         )
+
+        # forget_gate = lasagne.layers.Gate(b=lasagne.init.Constant(5.0))
+        # l_lstm1 = lasagne.layers.LSTMLayer(
+        #     l_in, 
+        #     num_units=self.num_hidden, 
+        #     #mask_input=l_mask, 
+        #     forgetgate=forget_gate,
+        #     cell_init=lasagne.init.HeUniform(),
+        #     hid_init=lasagne.init.HeUniform(),
+        #     grad_clipping=10,
+        #     unroll_scan=True,
+        #     only_return_final=True
+        # )
         
         l_out = lasagne.layers.DenseLayer(
-            l_lstm1,
+            l_rnn1,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(0)
         )
 
-        return l_out
+        # action network
+        l_in_act = lasagne.layers.InputLayer(shape=(1, 1, input_shape))
+        self.hid_init = theano.shared(np.zeros((1, self.num_hidden), dtype=theano.config.floatX))
+
+        l_rnn_act = lasagne.layers.RecurrentLayer(
+            l_in,
+            num_units=self.num_hidden,
+            W_in_to_hid=l_rnn1.W_in_to_hid,
+            W_hid_to_hid=l_rnn1.W_hid_to_hid,
+            b=l_rnn1.b,
+            nonlinearity=lasagne.nonlinearities.tanh,
+            grad_clipping=10,
+            hid_init=self.hid_init,
+            only_return_final=True
+        )
+
+        l_act_out = lasagne.layers.DenseLayer(
+            l_rnn_act,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=l_out.W,
+            b=l_out.b
+        )
+
+        return l_out, l_act_out, l_rnn_act
 
     def build_stacked_network(self, input_shape, sequence_length, batch_size, output_shape):
         """

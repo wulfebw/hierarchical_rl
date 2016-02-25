@@ -307,7 +307,7 @@ class RecurrentNeuralAgent(Agent):
         self.network = network
         self.policy = policy
         self.replay_memory = replay_memory
-        self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
+        self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging, verbose=True)
         self.logger.log_hyperparameters(network, policy, replay_memory)
 
         self.prev_state = None
