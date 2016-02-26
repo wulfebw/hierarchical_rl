@@ -13,11 +13,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 import agent
 import aws_s3_utility
 import experiment
+import file_utils
 import learning_utils
+import logger
 import mdps
 import policy
 import recurrent_qnetwork
 import replay_memory
+import state_adapters
 
 class TestRecurrentQNetworkConstruction(unittest.TestCase):
 
@@ -35,7 +38,6 @@ class TestRecurrentQNetworkConstruction(unittest.TestCase):
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, sequence_length, batch_size, num_actions, 
                 num_hidden, discount, learning_rate, regularization, update_rule, freeze_interval, rng)
-
 
 class TestRecurrentQNetworkTrain(unittest.TestCase):
     
@@ -122,8 +124,13 @@ class TestRecurrentQNetworkTrain(unittest.TestCase):
 
         loss = network.train(states, actions, rewards, next_states, terminals)
         actual = loss
-        expected = 0.5
+        expected = 5.0
         self.assertEquals(actual, expected)
+
+class TestRecurrentQNetworkGetQValues(unittest.TestCase):
+    
+    def test_get_q_values(self):
+        pass
 
 @unittest.skipIf(__name__ != '__main__', "this test class does not run unless this file is called directly")
 class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
@@ -147,19 +154,23 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 sequence_length=sequence_length, batch_size=batch_size, 
                 num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
                 learning_rate, regularization=reg, update_rule='adam', freeze_interval=
-                freeze_interval, rng=None)            
-            num_epochs = 100
-            epoch_length = 50
+                freeze_interval, network_type='single layer rnn', rng=None)            
+            num_epochs = 5
+            epoch_length = 1
             test_epoch_length = 0
             max_steps = (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
+            print 'building adapter...'
+            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
             rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
+            print 'building logger...'
+            log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
             print 'building agent...'
-            a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
+            a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, log=log, state_adapter=adapter)
             run_tests = False
             print 'building experiment...'
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, 
@@ -167,8 +178,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'running experiment...'
             e.run()
             
-            ak = ''
-            sk = ''
+            ak = file_utils.load_key('../access_key.key')
+            sk = file_utils.load_key('../secret_key.key')
             bucket = 'hierarchical'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)

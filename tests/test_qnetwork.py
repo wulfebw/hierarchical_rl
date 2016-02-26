@@ -14,11 +14,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 import agent
 import aws_s3_utility
 import experiment
+import file_utils
 import logger
 import mdps
 import policy
 import qnetwork
 import replay_memory
+import state_adapters
 
 class TestQNetworkConstruction(unittest.TestCase):
 
@@ -252,21 +254,29 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             discount = 1
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
+            print 'building network...'
             network = qnetwork.QNetwork(input_shape=2 * room_size, batch_size=batch_size, num_hidden_layers=2, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 100
             epoch_length = 50
             test_epoch_length = 0
             max_steps = (room_size * num_rooms) ** 2 
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
+            print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
+            print 'building memory...'
             rm = replay_memory.ReplayMemory(batch_size, capacity=50000)
-            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
+            print 'building logger...'
+            log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
+            print 'building state adapter...'
+            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            print 'building agent...'
+            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, log=log, state_adapter=adapter)
             run_tests = False
             e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
             e.run()
 
-            ak = ''
-            sk = ''
+            ak = file_utils.load_key('../access_key.key')
+            sk = file_utils.load_key('../secret_key.key')
             bucket = 'hierarchical'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)

@@ -162,7 +162,7 @@ class NeuralAgent(Agent):
     :description: A class that wraps a network so it may more easily interact with an experiment. 
     """
 
-    def __init__(self, network, policy, replay_memory, logging=False):
+    def __init__(self, network, policy, replay_memory, log, state_adapter):
         """
         :type network: a network class (see e.g., qnetwork.py)
         :param network: the network the agent uses to evaluate states
@@ -177,8 +177,9 @@ class NeuralAgent(Agent):
         self.network = network
         self.policy = policy
         self.replay_memory = replay_memory
-        self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging)
+        self.logger = log
         self.logger.log_hyperparameters(network, policy, replay_memory)
+        self.state_adapter = state_adapter
 
         self.prev_state = None
         self.prev_action = None
@@ -197,7 +198,7 @@ class NeuralAgent(Agent):
         :param rval: returns the action to next be taken within the environment
         """
         # need to transform an external state format to an internal one
-        next_state = self.convert_state_to_internal_format(next_state)
+        next_state = self.state_adapter.convert_state_to_agent_format(next_state)
 
         # store current (s,a,r,s') tuple
         self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state, 0))
@@ -247,7 +248,7 @@ class NeuralAgent(Agent):
         """
         description: determines the first action to take and initializes internal variables
         """
-        self.prev_state = self.convert_state_to_internal_format(state)
+        self.prev_state = self.state_adapter.convert_state_to_agent_format(state)
         self.prev_action = self.get_action(self.prev_state)
 
         self.logger.log_action(self.prev_action)
@@ -259,7 +260,7 @@ class NeuralAgent(Agent):
         """
 
         terminal = 1
-        next_state = self.convert_state_to_internal_format(next_state)
+        next_state = self.state_adapter.convert_state_to_agent_format(next_state)
         self.replay_memory.store((self.prev_state, self.prev_action, reward, next_state, terminal))
         self.logger.log_reward(reward)
         self.logger.finish_episode()
@@ -274,41 +275,22 @@ class NeuralAgent(Agent):
         """
         :description: returns the q values associated with a given state. Used for printing out a representation of the mdp with the values included. 
         """
-        state = self.convert_state_to_internal_format(state)
+        state = self.state_adapter.convert_state_to_agent_format(state)
         q_values = self.network.get_q_values(state)
         return q_values
-
-    def convert_state_to_internal_format(self, state):
-        """
-        :description: converts a state from an extenarl format to an internal one
-        """
-        # hard-coded values for state size currently, need to create a Converter class
-        row = np.zeros(3)
-        row[state[0] % 3] = 1
-        col = np.zeros(3)
-        col[state[1] % 3] = 1
-        formatted_state = np.hstack((row, col))
-
-        # # hard-coded values for state size currently, need to create a Converter class
-        # row = np.zeros(10)
-        # row[state[0]] = 1
-        # col = np.zeros(10)
-        # col[state[1]] = 1
-        # formatted_state = np.hstack((row, col))
-
-        return formatted_state
 
 class RecurrentNeuralAgent(Agent):
     """
     :description: A class that wraps a recuurent network so it may more easily 
         interact with an experiment. 
     """
-    def __init__(self, network, policy, replay_memory, logging=False):
+    def __init__(self, network, policy, replay_memory, state_adapter, log):
         self.network = network
         self.policy = policy
         self.replay_memory = replay_memory
-        self.logger = logger.NeuralLogger(agent_name='NeuralAgent', logging=logging, verbose=True)
+        self.logger = log
         self.logger.log_hyperparameters(network, policy, replay_memory)
+        self.state_adapter = state_adapter
 
         self.prev_state = None
         self.prev_action = None
@@ -327,7 +309,7 @@ class RecurrentNeuralAgent(Agent):
         :param rval: returns the action to next be taken within the environment
         """
         # need to transform an external state format to an internal one
-        next_state = self.convert_state_to_internal_format(next_state)
+        next_state = self.state_adapter.convert_state_to_agent_format(next_state)
 
         # store current (s,a,r,s') tuple
         self.replay_memory.store(self.prev_state, self.prev_action, reward, terminal=False)
@@ -382,7 +364,7 @@ class RecurrentNeuralAgent(Agent):
         """
         description: determines the first action to take and initializes internal variables
         """
-        self.prev_state = self.convert_state_to_internal_format(state)
+        self.prev_state = self.state_adapter.convert_state_to_agent_format(state)
         self.prev_action = self.get_action(self.prev_state)
 
         self.logger.log_action(self.prev_action)
@@ -407,27 +389,7 @@ class RecurrentNeuralAgent(Agent):
         """
         :description: returns the q values associated with a given state. Used for printing out a representation of the mdp with the values included. 
         """
-        state = self.convert_state_to_internal_format(state)
+        state = self.state_adapter.convert_state_to_agent_format(state)
         q_values = self.network.get_q_values(state)
         return q_values
-
-    def convert_state_to_internal_format(self, state):
-        """
-        :description: converts a state from an extenarl format to an internal one
-        """
-        # hard-coded values for state size currently, need to create a Converter class
-        row = np.zeros(3)
-        row[state[0] % 3] = 1
-        col = np.zeros(3)
-        col[state[1] % 3] = 1
-        formatted_state = np.hstack((row, col))
-
-        # # hard-coded values for state size currently, need to create a Converter class
-        # row = np.zeros(10)
-        # row[state[0]] = 1
-        # col = np.zeros(10)
-        # col[state[1]] = 1
-        # formatted_state = np.hstack((row, col))
-
         
-        return formatted_state

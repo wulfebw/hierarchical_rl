@@ -36,7 +36,7 @@ class Logger(object):
     :description: tracks and logs information about an agent
     """
     
-    def __init__(self, agent_name, logging=True, verbose=False):
+    def __init__(self, agent_name, logging=True, verbose=True):
         """
         :type agent_name: string 
         :param agent_name: name of the agent whose information is being logged
@@ -57,7 +57,6 @@ class Logger(object):
         self.log_dir = None
         self.logging = logging
         self.verbose = verbose
-
 
     def log_action(self, action):
         self.actions.append(action)
@@ -237,7 +236,7 @@ class NeuralLogger(Logger):
     :description: inherting class that accomodates a network based agent
     """
 
-    def __init__(self, agent_name, logging=True, verbose=False):
+    def __init__(self, agent_name, logging=True, verbose=True):
         super(NeuralLogger, self).__init__(agent_name, logging, verbose)
         self.weight_magnitudes = []
         self.weight_variances = []
