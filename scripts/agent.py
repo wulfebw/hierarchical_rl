@@ -377,6 +377,7 @@ class RecurrentNeuralAgent(Agent):
             definition to stay consistent with the other replay memory implementation.
         """
         self.replay_memory.store(self.prev_state, self.prev_action, reward, True)
+        self.network.finish_episode()
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):

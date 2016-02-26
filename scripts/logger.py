@@ -230,7 +230,6 @@ class Logger(object):
         plt.savefig(filepath)
         plt.close()
 
-
 class NeuralLogger(Logger):
     """
     :description: inherting class that accomodates a network based agent
@@ -314,7 +313,7 @@ class NeuralLogger(Logger):
         hyperparameters['freeze_interval'] = network.freeze_interval
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
         hyperparameters['actions_until_min'] = policy.actions_until_min
-        # hyperparameters['sequence_length'] = replay_memory.sequence_length
+        hyperparameters['sequence_length'] = replay_memory.sequence_length
 
         with open(filepath, 'wb') as f:
             for k, v in hyperparameters.iteritems():

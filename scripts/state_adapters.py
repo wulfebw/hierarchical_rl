@@ -13,7 +13,7 @@ class CoordinatesToSingleRoomRowColAdapter(object):
         >>>state = (4, 4)
         >>>adapter = CoordinatesToSingleRoomRowColAdapter(room_size=3)
         >>>adapter.convert_state_to_agent_format(state)
-        [[1,0,0,1,0,0]]
+        [1,0,0,1,0,0]
         """
         ridx, cidx = state
 

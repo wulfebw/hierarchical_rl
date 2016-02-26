@@ -27,6 +27,7 @@ class MDP(object):
 
     def compute_states(self):
         self.states = set()
+        self.graph = collections.defaultdict(lambda: set())
         queue = []
         self.states.add(self.get_start_state())
         queue.append(self.get_start_state())
@@ -34,10 +35,14 @@ class MDP(object):
             state = queue.pop()
             for action in self.get_actions(state):
                 for newState, prob, reward in self.succ_prob_reward(state, action):
+                    if newState != state:
+                        self.graph[state].add(newState)
                     if newState not in self.states:
                         self.states.add(newState)
                         if not self.is_end_state(newState):
                             queue.append(newState)
+
+        self.graph = {k:list(v) for k, v in self.graph.iteritems()}
 
 ###########################################################################
 

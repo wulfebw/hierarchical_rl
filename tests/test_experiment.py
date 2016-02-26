@@ -8,7 +8,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 import agent
 import experiment
+import logger
 import mdps
+import policy
+import recurrent_qnetwork
+import replay_memory
+import state_adapters
 
 def get_V(e):
     V = {}
@@ -128,6 +133,48 @@ class TestExperimentMazeSolving(TestExperiment):
         expected_total_max = -40
         self.assertTrue(actual_total < expected_total_max)
         self.assertTrue(actual_total > expected_total_min)
+
+class TestExperimentValueString(TestExperiment):
+
+    def test_sequence_value_string(self):
+        room_size = 3
+        num_rooms = 3
+        mdp = mdps.MazeMDP(room_size, num_rooms)
+        mdp.compute_states()
+        mdp.EXIT_REWARD = 1
+        mdp.MOVE_REWARD = -0.1
+        discount = 1
+        sequence_length = 2
+        batch_size = 10
+        learning_rate = 1e-3
+        freeze_interval = 10000
+        num_hidden = 4
+        eps = .5
+        reg = 1e-8
+        num_actions = len(mdp.get_actions(None))
+        batch_size = 100
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size, 
+            sequence_length=sequence_length, batch_size=batch_size, 
+            num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
+            learning_rate, regularization=reg, update_rule='adam', freeze_interval=
+            freeze_interval, network_type='single layer lstm', rng=None)        
+        num_epochs = 5
+        epoch_length = 10
+        test_epoch_length = 0
+        max_steps = (room_size * num_rooms) ** 2
+        epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
+        adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+        p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
+        rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
+                sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
+        log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
+        a = agent.RecurrentNeuralAgent(network=network, policy=p, replay_memory=rm, log=log, state_adapter=adapter)
+        run_tests = False
+        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, 
+            max_steps, run_tests, value_logging=True)
+        e.log_temporal_value_string()
+        
+
 
 if __name__ == '__main__':
     unittest.main()

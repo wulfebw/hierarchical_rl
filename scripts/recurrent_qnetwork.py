@@ -151,6 +151,12 @@ class RecurrentQNetwork(object):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
 
+    def finish_episode(self):
+        """
+        :description: perform tasks at the end of the episode, namely set the hid init value to zeros
+        """
+        self.prev_hidden_state = np.zeros((1, self.num_hidden))
+
     ##########################################################################################
     #### Network and Learning Initialization below
     ##########################################################################################
@@ -242,6 +248,8 @@ class RecurrentQNetwork(object):
     def get_build_network(self):
         if self.network_type == 'single layer rnn':
             return self.build_single_layer_rnn_network
+        elif self.network_type == 'single layer lstm':
+            return self.build_single_layer_lstm_network
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))
 
@@ -307,7 +315,7 @@ class RecurrentQNetwork(object):
             l_in, 
             num_units=self.num_hidden, 
             ingate=default_gate,
-            outputgate=default_gate,
+            outgate=default_gate,
             forgetgate=forget_gate,
             grad_clipping=10,
             hid_init=self.hid_init,
