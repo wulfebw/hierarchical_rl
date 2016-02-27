@@ -378,6 +378,7 @@ class RecurrentNeuralAgent(Agent):
         """
         self.replay_memory.store(self.prev_state, self.prev_action, reward, True)
         self.network.finish_episode()
+        self.logger.log_reward(reward)
         self.logger.finish_episode()
 
     def finish_epoch(self, epoch):

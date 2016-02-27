@@ -256,6 +256,7 @@ class NeuralLogger(Logger):
             self.record_stat('losses', self.losses, epoch)
             if self.verbose:
                 print 'losses: {}\tepoch: {}'.format(np.mean(self.losses), epoch)
+
             self.record_weights(epoch, network)
             self.record_policy(epoch, policy)
         except Exception as e:
