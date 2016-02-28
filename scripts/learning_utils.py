@@ -90,7 +90,7 @@ def get_value_array_from_value_image_file(filepath):
         lines = [[val for val in line if val != ''] for line in lines]
         lines = [[float(val) for val in line] for line in lines]
         lines = np.array(lines)
-    return lines
+    return lines[::-1]
 
 def make_heat_map(filepath, epoch):
     # convert value image to numeric array
