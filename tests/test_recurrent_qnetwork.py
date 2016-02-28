@@ -234,12 +234,12 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps):
             room_size = 3
-            num_rooms = 2
+            num_rooms = 1
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = -0.1
+            mdp.MOVE_REWARD = -0.01
             discount = 1
             sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
@@ -251,8 +251,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
                         network_type='single layer lstm', rng=None)            
-            num_epochs = 10
-            epoch_length = 10
+            num_epochs = 20
+            epoch_length = 50
             test_epoch_length = 0
             max_steps = (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
@@ -286,10 +286,10 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         for idx in range(5):
             lr = random.choice([.001]) 
-            fi = random.choice([100]) 
+            fi = random.choice([100])
             nh = random.choice([4]) 
             reg = random.choice([5e-4]) 
-            seq_len = random.choice([6])
+            seq_len = random.choice([2])
             eps = random.choice([.5])
             print 'run number: {}'.format(idx)
             print 'learning_rate: {}\tfrozen_interval: \

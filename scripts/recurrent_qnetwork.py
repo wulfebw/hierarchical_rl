@@ -103,8 +103,8 @@ class RecurrentQNetwork(object):
         self.rewards_shared.set_value(rewards)
         self.next_states_shared.set_value(next_states)
         self.terminals_shared.set_value(terminals.astype('int32'))
-        self.hid_init.set_value(np.zeros((1, self.num_hidden)))
-
+        self.hid_init.set_value(np.zeros((1, self.num_hidden), dtype=theano.config.floatX))
+     
         loss, q_values = self._train()
         return loss
 
