@@ -324,6 +324,7 @@ class NeuralLogger(Logger):
         hyperparameters['freeze_interval'] = network.freeze_interval
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
         hyperparameters['actions_until_min'] = policy.actions_until_min
+        hyperparameters['epsilon'] = policy.exploration_prob
         hyperparameters['network_type'] = network.network_type
         hyperparameters['sequence_length'] = replay_memory.sequence_length
 
