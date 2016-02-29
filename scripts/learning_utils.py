@@ -86,7 +86,7 @@ def get_value_array_from_value_image_file(filepath):
     lines = None
     with open(filepath, 'rb') as f:
         lines = f.readlines()
-        lines = [line.replace('\n', '').split(' ') for line in lines]
+        lines = [line.replace('\n', '').replace('S', '0').replace('E', '1').split(' ') for line in lines]
         lines = [[val for val in line if val != ''] for line in lines]
         lines = [[float(val) for val in line] for line in lines]
         lines = np.array(lines)
@@ -104,7 +104,7 @@ def make_heat_map(filepath, epoch):
     output_filepath = os.path.join(run_dir, 'heatmaps', 'value_heatmap_{}.png'.format(epoch))
 
     # create and save heatmap
-    heatmap = plt.pcolormesh(value_array)
+    heatmap = plt.pcolormesh(value_array, vmin=-0.25, vmax=1.25)
     plt.colorbar()
     plt.savefig(output_filepath)
     plt.close()

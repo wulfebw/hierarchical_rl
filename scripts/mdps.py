@@ -128,7 +128,7 @@ class MazeMDP(MDP):
     """
 
     EXIT_REWARD = 1
-    MOVE_REWARD = -0.1
+    MOVE_REWARD = -0.01
 
     def __init__(self, room_size, num_rooms):
         self.room_size = room_size
@@ -217,7 +217,8 @@ class MazeMDP(MDP):
         if np.array_equal(next_state, self.end_state):
             reward = self.EXIT_REWARD
 
-        return [(next_state, 0.9, reward), (state, 0.1, self.MOVE_REWARD)]
+        #return [(next_state, 0.9, reward), (state, 0.1, self.MOVE_REWARD)]
+        return [(next_state, 1, reward)]
 
     def print_v(self, V):
         for ridx in reversed(range(self.max_position + 1)):
@@ -249,10 +250,12 @@ class MazeMDP(MDP):
         print '\n'
 
     def print_trajectory(self, actions):
-        coordinates = self.start_state
+        coordinates = self.get_start_state()
         self.print_maze(coordinates)
         for action in actions:
-            coordinates = (coordinates[0] + action[0], coordinates[1] + action[1])
+            action = self.get_actions()[action]
+            if not self.runs_into_wall(coordinates, action):
+                coordinates = (coordinates[0] + action[0], coordinates[1] + action[1])
             self.print_maze(coordinates)
 
 ###########################################################################

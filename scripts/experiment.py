@@ -118,8 +118,12 @@ class Experiment(object):
         :description: finalize epoch
         """
         if self.value_logging:
-            #self.log_temporal_value_string()
             self.log_value_string()
+            # if epoch > 3:
+            #     self.log_trajectories()
+
+    def log_trajectories(self):
+        self.agent.logger.log_trajectories(self.mdp)
 
     def log_value_string(self):
         """
@@ -129,46 +133,7 @@ class Experiment(object):
         V = {}
         for state in self.mdp.states:
             V[state] = np.max(self.agent.get_q_values(state))
-            self.agent.network.finish_episode()
         value_string = self.mdp.get_value_string(V)
         self.agent.logger.log_value_string(value_string)
         self.agent.logger.log_values(V)
-
-    def log_temporal_value_string(self):
-        """
-        :description: collect a bunch of random trajectories through state space and then run those
-            through the network so as to get values for states that depend on previous steps (because
-            the hid init variable). Average across trajectories to get a rough idea of the value
-            of each state (right?)
-        """
-        V = collections.defaultdict(lambda: [])
-        iterations = 20
-        max_steps = 500
-        trajectories = []
-        for t in range(iterations):
-            trajectory = []
-            state = self.mdp.get_start_state()
-            count = 0
-            while count < max_steps:
-                trajectory.append(state)
-                if self.mdp.is_end_state(state):
-                    break
-                state = random.choice(self.mdp.graph[state])
-                count += 1
-            trajectories.append(trajectory)
-        for trajectory in trajectories:
-            for state in trajectory:
-                V[state].append(np.max(self.agent.get_q_values(state)))
-            self.agent.network.finish_episode()
-        V_mean = {}
-        for state in self.mdp.states:
-            V_mean[state] = 0
-        for k, v in V.iteritems():
-            V_mean[k] = np.mean(v)
-        value_string = self.mdp.get_value_string(V_mean)
-        self.agent.logger.log_value_string(value_string)
-        self.agent.logger.log_values(V_mean)
-
-
-
 

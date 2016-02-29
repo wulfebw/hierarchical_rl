@@ -258,53 +258,64 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
                 max_q_value = max(network.get_q_values(state).tolist())
                 row_values.append(max_q_value)
             values.append(row_values)
-        
-        for row in values:
-            for ele in row:
-                print ele,
-            print '\n'
+
+        # for row in values:
+        #     for ele in row:
+        #         print ele,
+        #     print '\n'
 
 
     # why is cell init nonzero?
-    # def test_for_zero_cell_init_with_len_1_sequences(self):
-    #     input_shape = 2
-    #     batch_size = 2
-    #     sequence_length = 1
-    #     num_actions = 2
-    #     num_hidden = 1
-    #     discount = 1
-    #     learning_rate = 1
-    #     update_rule = 'adam'
-    #     freeze_interval = 1
-    #     regularization = 1e-4
-    #     network_type = 'single layer lstm'
-    #     rng = None
-    #     network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
-    #                 sequence_length, batch_size, num_actions, num_hidden, 
-    #                 discount, learning_rate, regularization, update_rule, 
-    #                 freeze_interval, network_type, rng)
+    def test_for_zero_cell_init_with_len_1_sequences(self):
+        input_shape = 2
+        batch_size = 2
+        sequence_length = 1
+        num_actions = 2
+        num_hidden = 1
+        discount = 1
+        learning_rate = 1
+        update_rule = 'adam'
+        freeze_interval = 1
+        regularization = 1e-4
+        network_type = 'single layer lstm'
+        rng = None
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+                    sequence_length, batch_size, num_actions, num_hidden, 
+                    discount, learning_rate, regularization, update_rule, 
+                    freeze_interval, network_type, rng)
 
-    #     reward_multiplier = -10000
+        print 'BEFORE'
+        params = lasagne.layers.get_all_params(network.l_out)
+        param_values = lasagne.layers.get_all_param_values(network.l_out)
+        for p, v in zip(params, param_values):
+            print p
+            print v 
+            print '\n'
 
-    #     for idx in range(100):
-    #         states = np.ones((batch_size, sequence_length, input_shape))
+        states = np.ones((batch_size, sequence_length, input_shape))
+        actions = np.ones((batch_size, 1), dtype='int32')
+        rewards = np.ones((batch_size, 1))
+        next_states = np.ones((batch_size, sequence_length, input_shape))
+        terminals = np.zeros((batch_size, 1), dtype='int32')
+        network.train(states, actions, rewards, next_states, terminals)
 
-    #         action_multiplier = random.choice([0,1])
-    #         actions = np.ones((batch_size, 1), dtype='int32') * action_multiplier
-    #         rewards = np.ones((batch_size, 1)) * reward_multiplier
-    #         next_states = np.ones((batch_size, sequence_length, input_shape))
-    #         terminals = np.zeros((batch_size, 1), dtype='int32')
-    #         network.train(states, actions, rewards, next_states, terminals)
+        print 'AFTER 1'
+        params = lasagne.layers.get_all_params(network.l_out)
+        param_values = lasagne.layers.get_all_param_values(network.l_out)
+        for p, v in zip(params, param_values):
+            print p
+            print v 
+            print '\n'
 
-    #     params = lasagne.layers.get_all_params(network.l_out)
-    #     param_values = lasagne.layers.get_all_param_values(network.l_out)
-    #     for p, v in zip(params, param_values):
-    #         print p
-    #         print v 
-    #         print '\n'
+        network.train(states, actions, rewards, next_states, terminals)
 
-    #     q_values = network.get_q_values(states[0]).tolist()
-    #     self.assertTrue(sum(q_values) < 0)
+        print 'AFTER 2'
+        params = lasagne.layers.get_all_params(network.l_out)
+        param_values = lasagne.layers.get_all_param_values(network.l_out)
+        for p, v in zip(params, param_values):
+            print p
+            print v 
+            print '\n'
 
 class TestRecurrentQNetworkSaturation(unittest.TestCase):
     
@@ -430,14 +441,15 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
 
-        def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps):
+        def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps, nt):
             room_size = 5
-            num_rooms = 2
+            num_rooms = 1
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = -0.1
+            mdp.MOVE_REWARD = -0.01
+            network_type = nt
             discount = 1
             sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
@@ -448,12 +460,12 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
-                        network_type='single layer rnn', rng=None)            
-            num_epochs = 50
-            epoch_length = 1
+                        network_type=network_type, rng=None)            
+            num_epochs = 2
+            epoch_length = 2
             test_epoch_length = 0
-            max_steps =  1 # 2 * (room_size * num_rooms) ** 2
-            epsilon_decay = 1 #(num_epochs * epoch_length * max_steps) / 5
+            max_steps = 2 # 2 * (room_size * num_rooms) ** 2
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             print 'building adapter...'
             # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
@@ -463,7 +475,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size * num_rooms,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
             print 'building logger...'
-            log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
+            log = logger.NeuralLogger(agent_name=network_type)
             print 'building agent...'
             a = agent.RecurrentNeuralAgent(network=network, policy=p, 
                     replay_memory=rm, log=log, state_adapter=adapter)
@@ -483,18 +495,23 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
-        for idx in range(5):
-            lr = random.choice([.001]) 
-            fi = random.choice([1000])
-            nh = random.choice([4]) 
+
+        net_types = ['single_layer_rnn', 'single_layer_lstm', 'single_layer_gru', \
+            'stacked_lstm', 'stacked_gru', 'triple_stacked_lstm', 'triple_stacked_gru', 'linear_rnn']
+        for idx in range(8):
+            lr = random.choice([.01, .009, .008, .007, .006, .005]) 
+            fi = random.choice([100, 200, 300, 400, 500])
+            nh = random.choice([2, 4, 8]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([2])
-            eps = random.choice([.5])
+            seq_len = random.choice([2, 4, 8])
+            eps = random.choice([.2, .3, .4, .5])
+            nt = net_types[idx] #random.choice(net_types)
+           
             print 'run number: {}'.format(idx)
-            print 'learning_rate: {}\tfrozen_interval: \
-            {}\tnum_hidden: {}\treg: {}\tsequence_length: \
-            {}\teps: {}'.format(lr,fi,nh, reg, seq_len, eps)
-            run(lr, fi, nh, reg, seq_len, eps)
+            print 'learning_rate: {}  frozen_interval: \
+            {}  num_hidden: {}  reg: {}  sequence_length: \
+            {}  eps: {}  network_type: {}'.format(lr,fi,nh, reg, seq_len, eps, nt)
+            run(lr, fi, nh, reg, seq_len, eps, nt)
 
 if __name__ == '__main__':
     unittest.main()

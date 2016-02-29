@@ -48,6 +48,8 @@ class Logger(object):
         self.actions = []
         self.rewards = []
         self.episode_rewards = []
+        self.episode_actions = []
+        self.action_start = 0
         self.losses = []
         self.states = []
         self.updates = 0
@@ -57,6 +59,7 @@ class Logger(object):
         self.log_dir = None
         self.logging = logging
         self.verbose = verbose
+
 
     def log_action(self, action):
         self.actions.append(action)
@@ -102,6 +105,9 @@ class Logger(object):
         """
         self.episode_rewards.append(np.sum(self.rewards))
         self.rewards = []
+
+        self.episode_actions.append(self.actions[self.action_start:])
+        self.action_start = len(self.actions)
 
     def record_stat(self, name, values, epoch):
         """
@@ -241,7 +247,6 @@ class NeuralLogger(Logger):
         self.weight_variances = []
         self.exploration_probs = []
 
-
     def log_epoch(self, epoch, network, policy):
 
         if not self.logging:
@@ -298,6 +303,10 @@ class NeuralLogger(Logger):
         self.exploration_probs.append(policy.exploration_prob)
         self.record_stat('exploration_probs', self.exploration_probs, epoch)
 
+    def log_trajectories(self, mdp):
+        for trajectory in self.episode_actions:
+            mdp.print_trajectory(trajectory)
+
     def log_hyperparameters(self, network, policy, replay_memory):
         if self.log_dir is None:
             self.create_log_dir()
@@ -315,6 +324,7 @@ class NeuralLogger(Logger):
         hyperparameters['freeze_interval'] = network.freeze_interval
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
         hyperparameters['actions_until_min'] = policy.actions_until_min
+        hyperparameters['network_type'] = network.network_type
         hyperparameters['sequence_length'] = replay_memory.sequence_length
 
         with open(filepath, 'wb') as f:

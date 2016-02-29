@@ -103,7 +103,6 @@ class RecurrentQNetwork(object):
         self.rewards_shared.set_value(rewards)
         self.next_states_shared.set_value(next_states)
         self.terminals_shared.set_value(terminals.astype('int32'))
-        self.hid_init.set_value(np.zeros((1, self.num_hidden), dtype=theano.config.floatX))
      
         loss, q_values = self._train()
         return loss
@@ -120,13 +119,18 @@ class RecurrentQNetwork(object):
         state = np.array([[1,2],[1,3]])
         network.get_q_values(state)
         """
-        states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
-        states[0, 0, :] = state
+        if state.shape == (self.sequence_length, self.input_shape):
+            states = np.zeros((1, self.sequence_length, self.input_shape),  \
+                dtype=theano.config.floatX)
+            states[0, :, :] = state
+        elif state.shape == (self.input_shape, ):
+            states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
+            states[0, 0, :] = state
+        else:
+            raise ValueError('invalid state passed to get_q_values. State: {}, \
+                shape: {}'.format(state, state.shape))
         self.states_shared.set_value(states)
-        self.hid_init.set_value(self.prev_hidden_state.astype(theano.config.floatX))
-        q_values, hidden_state = self._get_q_values()
-        q_values = q_values[0]
-        self.prev_hidden_state = hidden_state
+        q_values = self._get_q_values()[0]
         return q_values
 
     def get_params(self):
@@ -151,12 +155,6 @@ class RecurrentQNetwork(object):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
 
-    def finish_episode(self):
-        """
-        :description: perform tasks at the end of the episode, namely set the hid init value to zeros
-        """
-        self.prev_hidden_state = np.zeros((1, self.num_hidden))
-
     ##########################################################################################
     #### Network and Learning Initialization below
     ##########################################################################################
@@ -177,15 +175,9 @@ class RecurrentQNetwork(object):
         batch_size, input_shape = self.batch_size, self.input_shape
         lasagne.random.set_rng(self.rng)
 
-        # 0. create a shared variable to use as the initial hidden state when deriving q values for
-        # action selection
-        self.hid_init = theano.shared(np.zeros((1, self.num_hidden), dtype=theano.config.floatX))
-        # create another class member to store this value so we can set it to zero during training
-        self.prev_hidden_state = np.zeros((1, self.num_hidden))
-
         # 1. build the q network and target q network
-        self.l_out, rnn_out = build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
-        self.next_l_out, _ = build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.l_out = build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
+        self.next_l_out = build_network(input_shape, self.sequence_length, batch_size, self.num_actions)
         self.reset_target_network()
 
         # 2. initialize theano symbolic variables used for compiling functions
@@ -241,15 +233,26 @@ class RecurrentQNetwork(object):
             actions: self.actions_shared,
             terminals: self.terminals_shared
         }
-        hidden_state = lasagne.layers.get_output(rnn_out, states)
         self._train = theano.function([], [loss, q_vals], updates=updates, givens=givens)
-        self._get_q_values = theano.function([], [q_vals, hidden_state], givens={states: self.states_shared})
+        self._get_q_values = theano.function([], [q_vals], givens={states: self.states_shared})
 
     def get_build_network(self):
-        if self.network_type == 'single layer rnn':
+        if self.network_type == 'single_layer_rnn':
             return self.build_single_layer_rnn_network
-        elif self.network_type == 'single layer lstm':
+        elif self.network_type == 'single_layer_lstm':
             return self.build_single_layer_lstm_network
+        elif self.network_type == 'single_layer_gru':
+            return self.build_single_layer_gru_network
+        elif self.network_type == 'stacked_lstm':
+            return self.build_stacked_lstm_network
+        elif self.network_type == 'stacked_gru':
+            return self.build_stacked_gru_network
+        elif self.network_type == 'triple_stacked_lstm':
+            return self.build_triple_stacked_lstm_network
+        elif self.network_type == 'triple_stacked_gru':
+            return self.build_triple_stacked_gru_network
+        elif self.network_type == 'linear_rnn':
+            return self.build_linear_rnn_network
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))
 
@@ -266,9 +269,6 @@ class RecurrentQNetwork(object):
         return updates
 
     def build_single_layer_rnn_network(self, input_shape, sequence_length, batch_size, output_shape):
-        """
-        :description: Build a basic LSTM RNN network.
-        """
 
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape)
@@ -282,7 +282,6 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0.),
             nonlinearity=lasagne.nonlinearities.tanh,
             grad_clipping=10,
-            hid_init=self.hid_init,
             only_return_final=True
         )
 
@@ -294,12 +293,32 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0)
         )
 
-        return l_out, l_rnn1
+        return l_out
+
+    def build_single_layer_gru_network(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape)
+        )
+
+        l_gru = lasagne.layers.GRULayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=True
+        )
+        
+        l_out = lasagne.layers.DenseLayer(
+            l_gru,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0)
+        )
+
+        return l_out
 
     def build_single_layer_lstm_network(self, input_shape, sequence_length, batch_size, output_shape):
-        """
-        :description: Build a basic LSTM RNN network.
-        """
 
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape)
@@ -320,7 +339,6 @@ class RecurrentQNetwork(object):
             outgate=default_gate,
             forgetgate=forget_gate,
             grad_clipping=10,
-            hid_init=self.hid_init,
             only_return_final=True
         )
         
@@ -332,43 +350,41 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0)
         )
 
-        return l_out, l_lstm1
+        return l_out
 
     def build_stacked_lstm_network(self, input_shape, sequence_length, batch_size, output_shape):
-        """
-        :description: Build a stack of LSTMs RNNs.
-        """
 
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape)
         )
 
-        # l_mask = lasagne.layers.InputLayer(
-        #     shape=(batch_size, sequence_length)
-        # )
-
-        forget_gate = lasagne.layers.Gate(b=lasagne.init.Constant(5.0))
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(1.))
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
-            #mask_input=l_mask, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
             forgetgate=forget_gate,
-            cell_init=lasagne.init.HeUniform(),
-            hid_init=lasagne.init.HeUniform(),
             grad_clipping=10,
-            unroll_scan=True,
             only_return_final=False
         )
 
         l_lstm2 = lasagne.layers.LSTMLayer(
             l_lstm1, 
             num_units=self.num_hidden, 
-            #mask_input=l_mask, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
             forgetgate=forget_gate,
-            cell_init=lasagne.init.HeUniform(),
-            hid_init=lasagne.init.HeUniform(),
             grad_clipping=10,
-            unroll_scan=True,
             only_return_final=True
         )
         
@@ -382,12 +398,134 @@ class RecurrentQNetwork(object):
 
         return l_out
 
+    def build_stacked_gru_network(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape)
+        )
+
+        l_gru1 = lasagne.layers.GRULayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_gru2 = lasagne.layers.GRULayer(
+            l_gru1, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=True
+        )
+        
+        l_out = lasagne.layers.DenseLayer(
+            l_gru2,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(0)
+        )
+
+        return l_out
+
+
+    def build_triple_stacked_lstm_network(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape)
+        )
+
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(1.))
+        l_lstm1 = lasagne.layers.LSTMLayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_lstm2 = lasagne.layers.LSTMLayer(
+            l_lstm1, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_lstm3 = lasagne.layers.LSTMLayer(
+            l_lstm2, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=10,
+            only_return_final=True
+        )
+        
+        l_out = lasagne.layers.DenseLayer(
+            l_lstm3,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(0)
+        )
+
+        return l_out
+
+    def build_triple_stacked_gru_network(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape)
+        )
+
+        l_gru1 = lasagne.layers.GRULayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_gru2 = lasagne.layers.GRULayer(
+            l_gru1, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=False
+        )
+
+        l_gru3 = lasagne.layers.GRULayer(
+            l_gru2, 
+            num_units=self.num_hidden, 
+            grad_clipping=10,
+            only_return_final=True
+        )
+        
+        l_out = lasagne.layers.DenseLayer(
+            l_gru3,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(0)
+        )
+
+        return l_out
+
 
     def build_stacked_lstm_network_with_merge(self, input_shape, sequence_length, batch_size, output_shape):
-        """
-        :description: Build a stack of LSTM RNNs that each contribute their final output to 
-                    a fully connected layer. 
-        """
 
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape)
@@ -448,10 +586,7 @@ class RecurrentQNetwork(object):
 
         return l_out
 
-    def build_linear_network(self, input_shape, sequence_length, batch_size, output_shape):
-        """
-        :description: Build a basic LSTM RNN network.
-        """
+    def build_linear_rnn_network(self, input_shape, sequence_length, batch_size, output_shape):
 
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape)
@@ -476,28 +611,4 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0)
         )
 
-        # action network
-        l_in_act = lasagne.layers.InputLayer(shape=(1, 1, input_shape))
-        self.hid_init = theano.shared(np.zeros((1, self.num_hidden), dtype=theano.config.floatX))
-
-        l_rnn_act = lasagne.layers.RecurrentLayer(
-            l_in,
-            num_units=self.num_hidden,
-            W_in_to_hid=l_rnn1.W_in_to_hid,
-            W_hid_to_hid=l_rnn1.W_hid_to_hid,
-            b=l_rnn1.b,
-            nonlinearity=None,
-            grad_clipping=10,
-            hid_init=self.hid_init,
-            only_return_final=True
-        )
-
-        l_act_out = lasagne.layers.DenseLayer(
-            l_rnn_act,
-            num_units=output_shape,
-            nonlinearity=None,
-            W=l_out.W,
-            b=l_out.b
-        )
-
-        return l_out, l_act_out, l_rnn_act
+        return l_out
