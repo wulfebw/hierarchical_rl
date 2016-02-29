@@ -28,7 +28,7 @@ class CoordinatesToSingleRoomRowColAdapter(object):
 
         return formatted_state
 
-class CoordinateTosRowColAdapter(object):
+class CoordinatesToRowColAdapter(object):
 
     def __init__(self, room_size, num_rooms):
         self.room_size = room_size

@@ -314,6 +314,8 @@ class RecurrentQNetwork(object):
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,

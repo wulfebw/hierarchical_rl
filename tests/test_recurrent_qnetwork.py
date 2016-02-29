@@ -233,35 +233,36 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
     def test_qnetwork_solves_small_mdp(self):
 
         def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps):
-            room_size = 3
-            num_rooms = 1
+            room_size = 5
+            num_rooms = 2
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = -0.01
+            mdp.MOVE_REWARD = -0.1
             discount = 1
             sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
             print 'building network...'
-            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size, 
+            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size * num_rooms, 
                         sequence_length=sequence_length, batch_size=batch_size, 
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
                         network_type='single layer lstm', rng=None)            
-            num_epochs = 20
-            epoch_length = 50
+            num_epochs = 50
+            epoch_length = 1
             test_epoch_length = 0
             max_steps = (room_size * num_rooms) ** 2
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             print 'building adapter...'
-            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
-            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
+            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size * num_rooms,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
             print 'building logger...'
             log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
@@ -285,8 +286,8 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
         for idx in range(5):
-            lr = random.choice([.001]) 
-            fi = random.choice([100])
+            lr = random.choice([.0001]) 
+            fi = random.choice([10000])
             nh = random.choice([4]) 
             reg = random.choice([5e-4]) 
             seq_len = random.choice([2])
