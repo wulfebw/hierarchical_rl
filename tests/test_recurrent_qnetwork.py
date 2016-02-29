@@ -443,7 +443,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
 
         def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps, nt):
             room_size = 5
-            num_rooms = 1
+            num_rooms = 2
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
@@ -461,10 +461,10 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
                         network_type=network_type, rng=None)            
-            num_epochs = 2
-            epoch_length = 2
+            num_epochs = 10
+            epoch_length = 20
             test_epoch_length = 0
-            max_steps = 2 # 2 * (room_size * num_rooms) ** 2
+            max_steps = 2 * (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             print 'building adapter...'
             # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
@@ -473,7 +473,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
             rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size * num_rooms,
-                    sequence_length=sequence_length, batch_size=batch_size, capacity=50000)
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=25000)
             print 'building logger...'
             log = logger.NeuralLogger(agent_name=network_type)
             print 'building agent...'
@@ -491,21 +491,21 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             bucket = 'hierarchical'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
-                # aws_util.upload_directory(e.agent.logger.log_dir)
+                aws_util.upload_directory(e.agent.logger.log_dir)
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
 
         net_types = ['single_layer_rnn', 'single_layer_lstm', 'single_layer_gru', \
-            'stacked_lstm', 'stacked_gru', 'triple_stacked_lstm', 'triple_stacked_gru', 'linear_rnn']
-        for idx in range(8):
-            lr = random.choice([.01, .009, .008, .007, .006, .005]) 
+            'stacked_lstm', 'stacked_gru', 'triple_stacked_lstm', 'triple_stacked_gru']
+        for idx in range(50):
+            lr = random.choice([.01, .009, .008, .007, .006, .005, .004, .003]) 
             fi = random.choice([100, 200, 300, 400, 500])
             nh = random.choice([2, 4, 8]) 
             reg = random.choice([1e-4]) 
             seq_len = random.choice([2, 4, 8])
             eps = random.choice([.2, .3, .4, .5])
-            nt = net_types[idx] #random.choice(net_types)
+            nt = random.choice(net_types)
            
             print 'run number: {}'.format(idx)
             print 'learning_rate: {}  frozen_interval: \
