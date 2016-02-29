@@ -281,7 +281,7 @@ class RecurrentQNetwork(object):
             W_hid_to_hid=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(0.),
             nonlinearity=lasagne.nonlinearities.tanh,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
 
@@ -304,7 +304,7 @@ class RecurrentQNetwork(object):
         l_gru = lasagne.layers.GRULayer(
             l_in, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         
@@ -329,7 +329,7 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0.))
         forget_gate = lasagne.layers.recurrent.Gate(
             W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(1.))
+            b=lasagne.init.Constant(2.))
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
@@ -338,7 +338,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         
@@ -363,7 +363,7 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0.))
         forget_gate = lasagne.layers.recurrent.Gate(
             W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(1.))
+            b=lasagne.init.Constant(2.))
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
@@ -372,7 +372,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
@@ -384,7 +384,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         
@@ -407,14 +407,14 @@ class RecurrentQNetwork(object):
         l_gru1 = lasagne.layers.GRULayer(
             l_in, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
         l_gru2 = lasagne.layers.GRULayer(
             l_gru1, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         
@@ -440,7 +440,7 @@ class RecurrentQNetwork(object):
             b=lasagne.init.Constant(0.))
         forget_gate = lasagne.layers.recurrent.Gate(
             W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
-            b=lasagne.init.Constant(1.))
+            b=lasagne.init.Constant(2.))
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
@@ -449,7 +449,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
@@ -461,7 +461,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
@@ -473,7 +473,7 @@ class RecurrentQNetwork(object):
             ingate=default_gate,
             outgate=default_gate,
             forgetgate=forget_gate,
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         
@@ -496,21 +496,21 @@ class RecurrentQNetwork(object):
         l_gru1 = lasagne.layers.GRULayer(
             l_in, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
         l_gru2 = lasagne.layers.GRULayer(
             l_gru1, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=False
         )
 
         l_gru3 = lasagne.layers.GRULayer(
             l_gru2, 
             num_units=self.num_hidden, 
-            grad_clipping=10,
+            grad_clipping=2,
             only_return_final=True
         )
         

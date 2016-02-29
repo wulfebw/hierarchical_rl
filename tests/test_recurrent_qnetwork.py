@@ -496,14 +496,13 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
 
-        net_types = ['single_layer_rnn', 'single_layer_lstm', 'single_layer_gru', \
-            'stacked_lstm', 'stacked_gru', 'triple_stacked_lstm', 'triple_stacked_gru']
+        net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
         for idx in range(50):
-            lr = random.choice([.01, .009, .008, .007, .006, .005, .004, .003]) 
-            fi = random.choice([100, 200, 300, 400, 500])
-            nh = random.choice([2, 4, 8]) 
+            lr = random.choice([.007, .006, .005, .004, .003, .002, .001]) 
+            fi = random.choice([200, 300, 400, 500, 600, 700])
+            nh = random.choice([4]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([2, 4, 8])
+            seq_len = random.choice([2, 4])
             eps = random.choice([.2, .3, .4, .5])
             nt = random.choice(net_types)
            
