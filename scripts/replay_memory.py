@@ -4,7 +4,7 @@ import random
 import theano
 
 DEFAULT_CAPACITY = 10000
-SAMPLING_CAPACITY_FACTOR = 1000.
+SAMPLING_CAPACITY_FACTOR = 100.
 
 class ReplayMemory(object):
 

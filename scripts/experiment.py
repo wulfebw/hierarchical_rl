@@ -118,8 +118,8 @@ class Experiment(object):
         :description: finalize epoch
         """
         if self.value_logging:
-            self.log_temporal_value_string()
-            #self.log_value_string()
+            #self.log_temporal_value_string()
+            self.log_value_string()
 
     def log_value_string(self):
         """
@@ -129,6 +129,7 @@ class Experiment(object):
         V = {}
         for state in self.mdp.states:
             V[state] = np.max(self.agent.get_q_values(state))
+            self.agent.network.finish_episode()
         value_string = self.mdp.get_value_string(V)
         self.agent.logger.log_value_string(value_string)
         self.agent.logger.log_values(V)

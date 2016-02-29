@@ -121,7 +121,7 @@ class RecurrentQNetwork(object):
         network.get_q_values(state)
         """
         states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
-        states[0, 0, :] = state[0]
+        states[0, 0, :] = state
         self.states_shared.set_value(states)
         self.hid_init.set_value(self.prev_hidden_state.astype(theano.config.floatX))
         q_values, hidden_state = self._get_q_values()

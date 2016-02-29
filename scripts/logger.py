@@ -92,6 +92,7 @@ class Logger(object):
 
         self.record_stat('actions', self.actions, epoch)
         self.record_stat('rewards', self.episode_rewards, epoch)
+
         self.record_stat('losses', self.losses, epoch)
         self.record_weights(self.weights, epoch)
 
@@ -99,8 +100,7 @@ class Logger(object):
         """
         :description: performs tasks associated with the ending of an epidoe
         """
-        
-        self.episode_rewards.append((self.updates, np.sum(self.rewards)))
+        self.episode_rewards.append(np.sum(self.rewards))
         self.rewards = []
 
     def record_stat(self, name, values, epoch):
@@ -243,6 +243,7 @@ class NeuralLogger(Logger):
 
 
     def log_epoch(self, epoch, network, policy):
+
         if not self.logging:
             return
 

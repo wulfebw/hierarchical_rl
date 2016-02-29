@@ -158,6 +158,9 @@ class QNetwork(object):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
 
+    def finish_episode(self):
+        pass
+
     ##########################################################################################
     #### Network and Learning Initialization below
     ##########################################################################################

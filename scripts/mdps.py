@@ -231,7 +231,7 @@ class MazeMDP(MDP):
         for ridx in reversed(range(self.max_position + 1)):
             for cidx in range(self.max_position + 1):
                 if (ridx, cidx) in V:
-                    value_string.append(round(V[(ridx, cidx)], 3))
+                    value_string.append(round(V[(ridx, cidx)], 5))
                     value_string.append(' ')
             value_string.append('\n')
         return ''.join([str(v) for v in value_string])

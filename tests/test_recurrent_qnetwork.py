@@ -226,6 +226,204 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
         q_values_after_hid_init = network.get_q_values(state).tolist()
         self.assertEquals(q_values_without_hid_init, q_values_after_hid_init)
 
+    def test_initial_q_values(self):
+        # if just one of these is 1, (or two are 1) why does a pattern arise?
+        input_shape = 20
+        batch_size = 10
+        sequence_length = 2
+        num_actions = 4
+        num_hidden = 4
+        discount = 1
+        learning_rate = 1e-2 
+        update_rule = 'adam'
+        freeze_interval = 1000
+        regularization = 1e-4
+        network_type = 'single layer lstm'
+        rng = None
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+                    sequence_length, batch_size, num_actions, num_hidden, 
+                    discount, learning_rate, regularization, update_rule, 
+                    freeze_interval, network_type, rng)
+
+        values = []
+        for r in range(10):
+            row_values = []
+            for c in range(10):
+                r_state = np.zeros(10, dtype=float)
+                c_state = np.zeros(10, dtype=float)
+                r_state[r] = 1
+                c_state[c] = 1
+                state = np.hstack((r_state, c_state))
+                network.finish_episode()
+                max_q_value = max(network.get_q_values(state).tolist())
+                row_values.append(max_q_value)
+            values.append(row_values)
+        
+        for row in values:
+            for ele in row:
+                print ele,
+            print '\n'
+
+
+    # why is cell init nonzero?
+    # def test_for_zero_cell_init_with_len_1_sequences(self):
+    #     input_shape = 2
+    #     batch_size = 2
+    #     sequence_length = 1
+    #     num_actions = 2
+    #     num_hidden = 1
+    #     discount = 1
+    #     learning_rate = 1
+    #     update_rule = 'adam'
+    #     freeze_interval = 1
+    #     regularization = 1e-4
+    #     network_type = 'single layer lstm'
+    #     rng = None
+    #     network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+    #                 sequence_length, batch_size, num_actions, num_hidden, 
+    #                 discount, learning_rate, regularization, update_rule, 
+    #                 freeze_interval, network_type, rng)
+
+    #     reward_multiplier = -10000
+
+    #     for idx in range(100):
+    #         states = np.ones((batch_size, sequence_length, input_shape))
+
+    #         action_multiplier = random.choice([0,1])
+    #         actions = np.ones((batch_size, 1), dtype='int32') * action_multiplier
+    #         rewards = np.ones((batch_size, 1)) * reward_multiplier
+    #         next_states = np.ones((batch_size, sequence_length, input_shape))
+    #         terminals = np.zeros((batch_size, 1), dtype='int32')
+    #         network.train(states, actions, rewards, next_states, terminals)
+
+    #     params = lasagne.layers.get_all_params(network.l_out)
+    #     param_values = lasagne.layers.get_all_param_values(network.l_out)
+    #     for p, v in zip(params, param_values):
+    #         print p
+    #         print v 
+    #         print '\n'
+
+    #     q_values = network.get_q_values(states[0]).tolist()
+    #     self.assertTrue(sum(q_values) < 0)
+
+class TestRecurrentQNetworkSaturation(unittest.TestCase):
+    
+    def test_negative_saturation_rnn(self):
+        input_shape = 2
+        batch_size = 2
+        sequence_length = 2
+        num_actions = 2
+        num_hidden = 1
+        discount = 1
+        learning_rate = 1
+        update_rule = 'adam'
+        freeze_interval = 1
+        regularization = 1e-4
+        network_type = 'single layer rnn'
+        rng = None
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+                    sequence_length, batch_size, num_actions, num_hidden, 
+                    discount, learning_rate, regularization, update_rule, 
+                    freeze_interval, network_type, rng)
+
+        reward_multiplier = -10000
+
+        for idx in range(100):
+            states = np.ones((batch_size, sequence_length, input_shape))
+
+            action_multiplier = random.choice([0,1])
+            actions = np.ones((batch_size, 1), dtype='int32') * action_multiplier
+            rewards = np.ones((batch_size, 1)) * reward_multiplier
+            next_states = np.ones((batch_size, sequence_length, input_shape))
+            terminals = np.zeros((batch_size, 1), dtype='int32')
+            network.train(states, actions, rewards, next_states, terminals)
+
+        q_values = network.get_q_values(states[0]).tolist()
+        self.assertTrue(sum(q_values) < 0)
+
+    def test_negative_saturation_lstm(self):
+        input_shape = 2
+        batch_size = 2
+        sequence_length = 2
+        num_actions = 2
+        num_hidden = 1
+        discount = 1
+        learning_rate = 1
+        update_rule = 'adam'
+        freeze_interval = 1
+        regularization = 1e-4
+        network_type = 'single layer lstm'
+        rng = None
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+                    sequence_length, batch_size, num_actions, num_hidden, 
+                    discount, learning_rate, regularization, update_rule, 
+                    freeze_interval, network_type, rng)
+
+        reward_multiplier = -10000
+
+        for idx in range(100):
+            states = np.ones((batch_size, sequence_length, input_shape))
+
+            action_multiplier = random.choice([0,1])
+            actions = np.ones((batch_size, 1), dtype='int32') * action_multiplier
+            rewards = np.ones((batch_size, 1)) * reward_multiplier
+            next_states = np.ones((batch_size, sequence_length, input_shape))
+            terminals = np.zeros((batch_size, 1), dtype='int32')
+            network.train(states, actions, rewards, next_states, terminals)
+
+        # all the params in the lstm layer become positive
+        # all the params in linear output layer become negative
+        # params = lasagne.layers.get_all_params(network.l_out)
+        # param_values = lasagne.layers.get_all_param_values(network.l_out)
+        # for p, v in zip(params, param_values):
+        #     print p
+        #     print v 
+        #     print '\n'
+
+        q_values = network.get_q_values(states[0]).tolist()
+        self.assertTrue(sum(q_values) < 0)
+
+    def test_positive_saturation_lstm(self):
+        input_shape = 2
+        batch_size = 2
+        sequence_length = 2
+        num_actions = 2
+        num_hidden = 1
+        discount = 1
+        learning_rate = 1
+        update_rule = 'adam'
+        freeze_interval = 1
+        regularization = 1e-4
+        network_type = 'single layer lstm'
+        rng = None
+        network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
+                    sequence_length, batch_size, num_actions, num_hidden, 
+                    discount, learning_rate, regularization, update_rule, 
+                    freeze_interval, network_type, rng)
+
+        reward_multiplier = 10000
+
+        for idx in range(100):
+            states = np.ones((batch_size, sequence_length, input_shape))
+
+            action_multiplier = random.choice([0,1])
+            actions = np.ones((batch_size, 1), dtype='int32') * action_multiplier
+            rewards = np.ones((batch_size, 1)) * reward_multiplier
+            next_states = np.ones((batch_size, sequence_length, input_shape))
+            terminals = np.zeros((batch_size, 1), dtype='int32')
+            network.train(states, actions, rewards, next_states, terminals)
+
+        # # everything becomes positive
+        # params = lasagne.layers.get_all_params(network.l_out)
+        # param_values = lasagne.layers.get_all_param_values(network.l_out)
+        # for p, v in zip(params, param_values):
+        #     print p
+        #     print v 
+        #     print '\n'
+
+        q_values = network.get_q_values(states[0]).tolist()
+        self.assertTrue(sum(q_values) > 0)
+
 @unittest.skipIf(__name__ != '__main__', "this test class does not run unless \
     this file is called directly")
 class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
@@ -250,12 +448,12 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
-                        network_type='single layer lstm', rng=None)            
+                        network_type='single layer rnn', rng=None)            
             num_epochs = 50
             epoch_length = 1
             test_epoch_length = 0
-            max_steps = (room_size * num_rooms) ** 2
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
+            max_steps =  1 # 2 * (room_size * num_rooms) ** 2
+            epsilon_decay = 1 #(num_epochs * epoch_length * max_steps) / 5
             print 'building adapter...'
             # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
@@ -281,15 +479,15 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             bucket = 'hierarchical'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
-                aws_util.upload_directory(e.agent.logger.log_dir)
+                # aws_util.upload_directory(e.agent.logger.log_dir)
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
         for idx in range(5):
-            lr = random.choice([.0001]) 
-            fi = random.choice([10000])
+            lr = random.choice([.001]) 
+            fi = random.choice([1000])
             nh = random.choice([4]) 
-            reg = random.choice([5e-4]) 
+            reg = random.choice([1e-4]) 
             seq_len = random.choice([2])
             eps = random.choice([.5])
             print 'run number: {}'.format(idx)
