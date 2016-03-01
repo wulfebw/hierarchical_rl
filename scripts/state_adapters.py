@@ -80,7 +80,11 @@ class CoordinatesToRowColRoomAdapter(object):
         col = np.zeros(self.room_size)
         col[cidx % self.room_size] = 1
         room = np.zeros(self.num_rooms ** 2)
+        room_row = cidx / self.room_size
+        room_col = ridx / self.room_size
+        room_idx = room_row * self.num_rooms + room_col
+        room[room_idx] = 1
         # concat the three vectors
-        formatted_state = np.hstack((row, col))
+        formatted_state = np.hstack((row, col, room))
 
         return formatted_state
