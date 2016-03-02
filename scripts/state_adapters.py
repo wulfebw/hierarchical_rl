@@ -88,3 +88,32 @@ class CoordinatesToRowColRoomAdapter(object):
         formatted_state = np.hstack((row, col, room))
 
         return formatted_state
+
+class CoordinatesToFlattenedGridAdapter(object):
+
+    def __init__(self, room_size):
+        self.room_size = room_size
+        self.num_rooms = num_rooms
+
+    def convert_state_to_agent_format(self, state):
+        """
+        Convert states in format (x, y) to the full grid
+        """
+        ridx, cidx = state
+
+        # find where the agent is in the room
+        grid = np.zeros((room_size * num_rooms, room_size * num_rooms))
+        grid[ridx, cidx] = 1
+
+        # flatten grid
+        formatted_state = grid.flatten()
+
+        return formatted_state
+
+class IdentityAdapter(object):
+
+    def convert_state_to_agent_format(self, state):
+        """
+        Returns the state as is. Exists to keep the interface consistent.
+        """
+        return state

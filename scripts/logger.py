@@ -218,6 +218,13 @@ class Logger(object):
         self.state_values['min'].append(min_value)
         self.state_values['start'].append(V[(0,0)])
         self.plot_values()
+        self.save_values()
+
+    def save_values(self):
+        for state, values in self.state_values.iteritems():
+            filename = '{}'.format(state)
+            filepath = os.path.join(self.log_dir, filename)
+            np.savez(filepath, values=values)
 
     def plot_values(self):
         """
@@ -325,8 +332,8 @@ class NeuralLogger(Logger):
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
         hyperparameters['actions_until_min'] = policy.actions_until_min
         hyperparameters['epsilon'] = policy.exploration_prob
-        hyperparameters['network_type'] = network.network_type
-        hyperparameters['sequence_length'] = replay_memory.sequence_length
+        # hyperparameters['network_type'] = network.network_type
+        # hyperparameters['sequence_length'] = replay_memory.sequence_length
 
         with open(filepath, 'wb') as f:
             for k, v in hyperparameters.iteritems():

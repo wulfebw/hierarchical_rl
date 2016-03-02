@@ -243,32 +243,37 @@ class TestQNetworkTrain(unittest.TestCase):
 class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
 
     def test_qnetwork_solves_small_mdp(self):
+        
 
         def run(learning_rate, freeze_interval, num_hidden, reg):
-            room_size = 3
-            num_rooms = 3
+            room_size = 5
+            num_rooms = 2
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
             mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = -0.1
+            mdp.MOVE_REWARD = -0.01
             discount = 1
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
             print 'building network...'
-            network = qnetwork.QNetwork(input_shape=2 * room_size, batch_size=batch_size, num_hidden_layers=2, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
-            num_epochs = 100
-            epoch_length = 50
+            network = qnetwork.QNetwork(input_shape=2 * room_size + num_rooms ** 2, batch_size=batch_size, num_hidden_layers=2, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
+            num_epochs = 50
+            epoch_length = 1
             test_epoch_length = 0
-            max_steps = (room_size * num_rooms) ** 2 
+            max_steps = 2 * (room_size * num_rooms) ** 2 
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
             print 'building memory...'
             rm = replay_memory.ReplayMemory(batch_size, capacity=50000)
             print 'building logger...'
-            log = logger.NeuralLogger(agent_name='RecurrentQNetwork')
+            log = logger.NeuralLogger(agent_name='QNetwork')
             print 'building state adapter...'
-            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            adapter = state_adapters.CoordinatesToRowColRoomAdapter(room_size=room_size, num_rooms=num_rooms)
+            # adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
+            # adapter = state_adapters.CoordinatesToFlattenedGridAdapter(room_size=room_size, num_rooms=num_rooms)
+            # adapter = state_adapters.IdentityAdapter(room_size=room_size, num_rooms=num_rooms)
+            # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             print 'building agent...'
             a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, log=log, state_adapter=adapter)
             run_tests = False
@@ -285,61 +290,13 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
         for idx in range(2):
-            lr = random.choice([.001])  # learning rate
-            fi = random.choice([10000]) # freeze interval
-            nh = random.choice([8]) # num hidden
+            lr = random.choice([.01, .009, .008, .007, .006, .005])  # learning rate
+            fi = random.choice([200, 300, 400, 500]) # freeze interval
+            nh = random.choice([4]) # num hidden
             reg = random.choice([5e-4]) # regularization
             print 'run number: {}'.format(idx)
             print lr, fi, nh, reg
             run(lr, fi, nh, reg)
-
-        states = []
-        for ridx in range(5):
-            for cidx in range(5):
-                states.append(np.array((ridx, cidx)))
-
-        for state in states:
-            q_values = network.get_q_values(state)
-            self.assertAlmostEqual(q_values.tolist(), np.ones(num_actions))
-
-@unittest.skipIf(__name__ != '__main__', "this test class does not run unless this file is called directly")
-class TestQNetworkFullOperation2DState(unittest.TestCase):
-
-    def test_qnetwork_solves_small_mdp(self):
-
-        def run(learning_rate, freeze_interval, num_hidden, reg):
-            room_size = 5
-            num_rooms = 2
-            mdp = mdps.MazeMDP(room_size, num_rooms)
-            mdp.compute_states()
-            mdp.EXIT_REWARD = 1
-            mdp.MOVE_REWARD = 0
-            discount = .95
-            num_actions = len(mdp.get_actions(None))
-            batch_size = 50
-            network = qnetwork.ConvQNetwork(input_shape=(10,10), batch_size=batch_size, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
-            
-            num_epochs = 2
-            epoch_length = 3
-            test_epoch_length = 0
-            max_steps = 1000
-            run_tests = False
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
-            p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
-            rm = replay_memory.ReplayMemory(batch_size)
-            a = agent.NeuralAgent(network=network, policy=p, replay_memory=rm, logging=True)
-            e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=True)
-            e.run()
-
-        for idx in range(25):
-            lr = 1e-4 #np.random.random() * 10 ** np.random.uniform(-1, -3)  # learning rate
-            fi = 10000 #np.random.random() * 10 ** np.random.uniform(4, 5)   # freeze interval
-            nh = 32 #int(np.random.uniform(8, 32)) # num hidden
-            reg = 1e-4 #np.random.random() * 10 ** np.random.uniform(-2, -5)  # regularization
-            print 'run number: {}'.format(idx)
-            print lr, fi, nh, reg
-            run(lr, fi, nh, reg)
-
 
 if __name__ == '__main__':
     unittest.main()
