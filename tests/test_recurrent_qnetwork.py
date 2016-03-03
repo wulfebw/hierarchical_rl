@@ -455,24 +455,24 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
             print 'building network...'
-            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size * num_rooms, 
+            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size, 
                         sequence_length=sequence_length, batch_size=batch_size, 
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
                         network_type=network_type, rng=None)            
-            num_epochs = 10
-            epoch_length = 20
+            num_epochs = 50
+            epoch_length = 10
             test_epoch_length = 0
             max_steps = 2 * (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
             print 'building adapter...'
-            # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
-            adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
+            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            # adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
-            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size * num_rooms,
+            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=25000)
             print 'building logger...'
             log = logger.NeuralLogger(agent_name=network_type)
@@ -496,13 +496,14 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
 
-        net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
+        # net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
+        net_types = ['build_stacked_lstm_network_with_merge']
         for idx in range(50):
             lr = random.choice([.007, .006, .005, .004, .003, .002, .001]) 
             fi = random.choice([200, 300, 400, 500, 600, 700])
-            nh = random.choice([4]) 
+            nh = random.choice([4, 8]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([2, 4])
+            seq_len = random.choice([4, 8, 10, 12, 14])
             eps = random.choice([.2, .3, .4, .5])
             nt = random.choice(net_types)
            

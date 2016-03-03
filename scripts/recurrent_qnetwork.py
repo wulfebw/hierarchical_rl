@@ -251,6 +251,8 @@ class RecurrentQNetwork(object):
             return self.build_triple_stacked_lstm_network
         elif self.network_type == 'triple_stacked_gru':
             return self.build_triple_stacked_gru_network
+        elif self.network_type == 'build_stacked_lstm_network_with_merge':
+            return self.build_stacked_lstm_network_with_merge
         elif self.network_type == 'linear_rnn':
             return self.build_linear_rnn_network
         else:
@@ -531,51 +533,38 @@ class RecurrentQNetwork(object):
             shape=(batch_size, sequence_length, input_shape)
         )
 
-        # l_mask = lasagne.layers.InputLayer(
-        #     shape=(batch_size, sequence_length)
-        # )
-
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(5.))
         l_lstm1 = lasagne.layers.LSTMLayer(
             l_in, 
             num_units=self.num_hidden, 
-            #mask_input=l_mask, 
-            grad_clipping=10,
-            unroll_scan=True,
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
             only_return_final=False
         )
 
         l_lstm2 = lasagne.layers.LSTMLayer(
             l_lstm1, 
             num_units=self.num_hidden, 
-            #mask_input=l_mask, 
-            grad_clipping=10,
-            unroll_scan=True,
-            only_return_final=False
-        )
-        
-        l_lstm3 = lasagne.layers.LSTMLayer(
-            l_lstm2, 
-            num_units=self.num_hidden, 
-            #mask_input=l_mask, 
-            grad_clipping=10,
-            unroll_scan=True,
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
             only_return_final=True
         )
 
-        # use the output from all of the stacked lstms as input to the output layer
         l_slice1 = lasagne.layers.SliceLayer(l_lstm1, -1, 1)
-        l_slice2 = lasagne.layers.SliceLayer(l_lstm2, -1, 1)   
-        l_merge = lasagne.layers.ConcatLayer([l_slice1, l_slice2, l_lstm3])
-        # l_merge = lasagne.layers.ConcatLayer([l_slice1, l_lstm2])
-
-        # l_hidden1 = lasagne.layers.DenseLayer(
-        #     l_merge,
-        #     num_units=output_shape,
-        #     nonlinearity=lasagne.nonlinearities.leaky_rectify,
-        #     W=lasagne.init.HeNormal(),
-        #     b=lasagne.init.Constant(.1)
-        # )
-
+        l_merge = lasagne.layers.ConcatLayer([l_slice1, l_lstm2])
         l_out = lasagne.layers.DenseLayer(
             l_merge,
             num_units=output_shape,
