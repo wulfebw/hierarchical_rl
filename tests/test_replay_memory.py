@@ -207,6 +207,188 @@ class TestSequenceReplayMemorySampleBatch(unittest.TestCase):
         self.assertEquals(next_states.shape, expected_states_shape)
         self.assertEquals(terminals.shape, (batch_size, 1))
 
+class TestSequenceReplayMemoryMakeLastSequence(unittest.TestCase):
+
+    def test_make_last_sequence_basic_operation(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 3
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        for idx in range(4):
+            state = np.ones(state_shape)
+            action = 0
+            reward = 0
+            next_state = np.ones(state_shape)
+            terminal = False
+            rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[1, 1], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_preceding_state_terminal(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 3
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = False
+        rm.store(state, action, reward, terminal)
+        terminal = True
+        rm.store(state, action, reward, terminal)
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [0, 0], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_some_previous_state_terminal_not_in_sequence(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 3
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = True
+        rm.store(state, action, reward, terminal)
+        terminal = False
+        for idx in range(10):
+            rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[1, 1], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_terminal_state_within_sequence_but_not_preceding(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 4
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        # tuple 1
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        # tuple 2
+        terminal = True
+        rm.store(state, action, reward, terminal)
+
+        # tuple 3
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [0, 0], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_terminal_state_first_in_made_sequence(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 4
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        # tuple 1
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = True
+        rm.store(state, action, reward, terminal)
+
+        # tuple 2
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        # tuple 3
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [1, 1], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_terminal_state_first_in_made_sequence_wrap(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 4
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        # tuple 1
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = False
+        for i in range(capacity - 1):
+            rm.store(state, action, reward, terminal)
+
+
+        terminal = True
+        rm.store(state, action, reward, terminal)
+
+        # tuple 2
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        # tuple 3
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [1, 1], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+
+    def test_make_last_sequence_insufficient_samples_for_full_sequence(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 4
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        # tuple 1
+        state = np.ones(state_shape)
+        action = 0
+        reward = 0
+        next_state = np.ones(state_shape)
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        # tuple 2
+        terminal = False
+        rm.store(state, action, reward, terminal)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [1, 1], [1, 1], [0, 1]]
+        self.assertEquals(actual, expected)
+
+    def test_make_last_sequence_empty(self):
+        batch_size = 10
+        state_shape = 2
+        sequence_length = 4
+        capacity = 30
+        rm = replay_memory.SequenceReplayMemory(state_shape, sequence_length, batch_size, capacity)
+
+        actual = rm.make_last_sequence(np.arange(state_shape)).tolist()
+        expected = [[0, 0], [0, 0], [0, 0], [0, 1]]
+        self.assertEquals(actual, expected)
+        
 
 if __name__ == '__main__':
     unittest.main()

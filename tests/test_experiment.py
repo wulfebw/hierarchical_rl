@@ -157,7 +157,7 @@ class TestExperimentValueString(TestExperiment):
             sequence_length=sequence_length, batch_size=batch_size, 
             num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=
             learning_rate, regularization=reg, update_rule='adam', freeze_interval=
-            freeze_interval, network_type='single layer lstm', rng=None)        
+            freeze_interval, network_type='single_layer_lstm', rng=None)        
         num_epochs = 5
         epoch_length = 10
         test_epoch_length = 0

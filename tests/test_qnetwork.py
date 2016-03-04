@@ -258,9 +258,9 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'building network...'
             network = qnetwork.QNetwork(input_shape=2 * room_size + num_rooms ** 2, batch_size=batch_size, num_hidden_layers=2, num_actions=4, num_hidden=num_hidden, discount=discount, learning_rate=learning_rate, regularization=reg, update_rule='adam', freeze_interval=freeze_interval, rng=None)
             num_epochs = 50
-            epoch_length = 1
+            epoch_length = 2
             test_epoch_length = 0
-            max_steps = 2 * (room_size * num_rooms) ** 2 
+            max_steps = 4 * (room_size * num_rooms) ** 2 
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 1.5
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, 0.5, 0.05, epsilon_decay)
@@ -290,8 +290,8 @@ class TestQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
         for idx in range(2):
-            lr = random.choice([.01, .009, .008, .007, .006, .005])  # learning rate
-            fi = random.choice([200, 300, 400, 500]) # freeze interval
+            lr = random.choice([.007, .006, .005])  # learning rate
+            fi = random.choice([200, 300, 400, 500, 600, 700, 800]) # freeze interval
             nh = random.choice([4]) # num hidden
             reg = random.choice([5e-4]) # regularization
             print 'run number: {}'.format(idx)

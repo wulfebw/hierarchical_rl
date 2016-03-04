@@ -35,7 +35,7 @@ class TestRecurrentQNetworkConstruction(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -55,7 +55,7 @@ class TestRecurrentQNetworkTrain(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -84,7 +84,7 @@ class TestRecurrentQNetworkTrain(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -117,7 +117,7 @@ class TestRecurrentQNetworkTrain(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -150,7 +150,7 @@ class TestRecurrentQNetworkTrain(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -189,7 +189,7 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -212,7 +212,7 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
         update_rule = 'sgd'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -238,7 +238,7 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
         update_rule = 'adam'
         freeze_interval = 1000
         regularization = 1e-4
-        network_type = 'single layer lstm'
+        network_type = 'single_layer_lstm'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -254,15 +254,9 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
                 r_state[r] = 1
                 c_state[c] = 1
                 state = np.hstack((r_state, c_state))
-                network.finish_episode()
                 max_q_value = max(network.get_q_values(state).tolist())
                 row_values.append(max_q_value)
             values.append(row_values)
-
-        # for row in values:
-        #     for ele in row:
-        #         print ele,
-        #     print '\n'
 
 
     # why is cell init nonzero?
@@ -277,7 +271,7 @@ class TestRecurrentQNetworkGetQValues(unittest.TestCase):
         update_rule = 'adam'
         freeze_interval = 1
         regularization = 1e-4
-        network_type = 'single layer lstm'
+        network_type = 'single_layer_lstm'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -330,7 +324,7 @@ class TestRecurrentQNetworkSaturation(unittest.TestCase):
         update_rule = 'adam'
         freeze_interval = 1
         regularization = 1e-4
-        network_type = 'single layer rnn'
+        network_type = 'single_layer_rnn'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -350,6 +344,7 @@ class TestRecurrentQNetworkSaturation(unittest.TestCase):
             network.train(states, actions, rewards, next_states, terminals)
 
         q_values = network.get_q_values(states[0]).tolist()
+        print q_values
         self.assertTrue(sum(q_values) < 0)
 
     def test_negative_saturation_lstm(self):
@@ -363,7 +358,7 @@ class TestRecurrentQNetworkSaturation(unittest.TestCase):
         update_rule = 'adam'
         freeze_interval = 1
         regularization = 1e-4
-        network_type = 'single layer lstm'
+        network_type = 'single_layer_lstm'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -405,7 +400,7 @@ class TestRecurrentQNetworkSaturation(unittest.TestCase):
         update_rule = 'adam'
         freeze_interval = 1
         regularization = 1e-4
-        network_type = 'single layer lstm'
+        network_type = 'single_layer_lstm'
         rng = None
         network = recurrent_qnetwork.RecurrentQNetwork(input_shape, 
                     sequence_length, batch_size, num_actions, num_hidden, 
@@ -455,25 +450,26 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
             print 'building network...'
-            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size, 
+            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size + num_rooms ** 2, 
                         sequence_length=sequence_length, batch_size=batch_size, 
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
                         update_rule='adam', freeze_interval=freeze_interval, 
                         network_type=network_type, rng=None)            
             num_epochs = 50
-            epoch_length = 10
+            epoch_length = 1
             test_epoch_length = 0
-            max_steps = 2 * (room_size * num_rooms) ** 2
-            epsilon_decay = (num_epochs * epoch_length * max_steps) / 2
+            max_steps = 4 * (room_size * num_rooms) ** 2
+            epsilon_decay = (num_epochs * epoch_length * max_steps) 
             print 'building adapter...'
-            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
+            # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             # adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
+            adapter = state_adapters.CoordinatesToRowColRoomAdapter(room_size=room_size, num_rooms=num_rooms)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
-            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size,
-                    sequence_length=sequence_length, batch_size=batch_size, capacity=25000)
+            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size + num_rooms ** 2,
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=100000)
             print 'building logger...'
             log = logger.NeuralLogger(agent_name=network_type)
             print 'building agent...'
@@ -496,15 +492,15 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
                 print 'error uploading to s3: {}'.format(e)
 
 
-        # net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
-        net_types = ['build_stacked_lstm_network_with_merge']
+        #net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
+        net_types = ['hierarchical_stacked_lstm_with_merge']
         for idx in range(50):
-            lr = random.choice([.007, .006, .005, .004, .003, .002, .001]) 
-            fi = random.choice([200, 300, 400, 500, 600, 700])
-            nh = random.choice([4, 8]) 
+            lr = random.choice([.01, .009, .008]) 
+            fi = random.choice([100, 200, 300])
+            nh = random.choice([8]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([4, 8, 10, 12, 14])
-            eps = random.choice([.2, .3, .4, .5])
+            seq_len = random.choice([8])
+            eps = random.choice([.4, .5])
             nt = random.choice(net_types)
            
             print 'run number: {}'.format(idx)

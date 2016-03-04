@@ -6,6 +6,7 @@
 import lasagne
 from lasagne.regularization import regularize_network_params, l2
 import numpy as np
+import sys
 import theano
 import theano.tensor as T
 
@@ -103,7 +104,7 @@ class RecurrentQNetwork(object):
         self.rewards_shared.set_value(rewards)
         self.next_states_shared.set_value(next_states)
         self.terminals_shared.set_value(terminals.astype('int32'))
-     
+
         loss, q_values = self._train()
         return loss
 
@@ -119,17 +120,22 @@ class RecurrentQNetwork(object):
         state = np.array([[1,2],[1,3]])
         network.get_q_values(state)
         """
-        if state.shape == (self.sequence_length, self.input_shape):
+        if state.shape == (self.sequence_length, self.input_shape) or \
+                        state.shape == (1, self.sequence_length, self.input_shape):
             states = np.zeros((1, self.sequence_length, self.input_shape),  \
                 dtype=theano.config.floatX)
             states[0, :, :] = state
-        elif state.shape == (self.input_shape, ):
-            states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
+        elif state.shape == (self.input_shape, ) or \
+                        state.shape == (1, self.input_shape) or \
+                        state.shape == (1, 1, self.input_shape):
+            # default sequence length to 2 to enable slicing inside the network
+            states = np.zeros((1, 2, self.input_shape), dtype=theano.config.floatX)
             states[0, 0, :] = state
         else:
             raise ValueError('invalid state passed to get_q_values. State: {}, \
                 shape: {}'.format(state, state.shape))
         self.states_shared.set_value(states)
+
         q_values = self._get_q_values()[0]
         return q_values
 
@@ -251,12 +257,14 @@ class RecurrentQNetwork(object):
             return self.build_triple_stacked_lstm_network
         elif self.network_type == 'triple_stacked_gru':
             return self.build_triple_stacked_gru_network
-        elif self.network_type == 'build_stacked_lstm_network_with_merge':
+        elif self.network_type == 'stacked_lstm_with_merge':
             return self.build_stacked_lstm_network_with_merge
+        elif self.network_type == 'hierarchical_stacked_lstm_with_merge':
+            return self.build_hierachical_stacked_lstm_network_with_merge
         elif self.network_type == 'linear_rnn':
             return self.build_linear_rnn_network
         else:
-            raise ValueError("Unrecognized update: {}".format(update_rule))
+            raise ValueError("Unrecognized network_type: {}".format(self.network_type))
 
     def initialize_updates(self, update_rule, loss, params, learning_rate):
         if update_rule == 'adam':
@@ -571,6 +579,60 @@ class RecurrentQNetwork(object):
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
             b=lasagne.init.Constant(0)
+        )
+
+        return l_out
+
+    def build_hierachical_stacked_lstm_network_with_merge(self, input_shape, sequence_length, batch_size, output_shape):
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape),
+            name='l_in'
+        )
+
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(5.))
+        l_lstm1 = lasagne.layers.LSTMLayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=False,
+            name='l_lstm1'
+        )
+
+        l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(1, sequence_length + 1, 2), 1, name='l_slice1_up')
+
+        l_lstm2 = lasagne.layers.LSTMLayer(
+            l_slice1_up, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=True,
+            name='l_lstm2'
+        )
+
+        l_slice1_out = lasagne.layers.SliceLayer(l_lstm1, -1, 1, name='l_slice1_out')
+        l_merge = lasagne.layers.ConcatLayer([l_slice1_out, l_lstm2], name='l_merge')
+        l_out = lasagne.layers.DenseLayer(
+            l_merge,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0),
+            name='l_out'
         )
 
         return l_out

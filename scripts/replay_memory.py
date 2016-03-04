@@ -157,14 +157,25 @@ class SequenceReplayMemory(object):
         :type next_state: np.array
         :param next_state: the next state to be inserted last into the sequence
         """
-        sequence = np.zeros(self.sequence_shape, dtype=theano.config.floatX)
 
-        # if this is not the first state collected and the previous state was not terminal
-        # then we want to use the past sequence_len - 1 states in deciding the action
-        if len(self.terminals) > 0 and self.terminals[-1] == False:
-            indexes = np.arange(self.top - self.sequence_length + 1, self.top)
-            sequence[0:self.sequence_length - 1] = self.states.take(indexes, axis=0, mode='wrap')
+        # take states from the memory
+        sequence = np.zeros(self.sequence_shape, dtype=theano.config.floatX)
+        indexes = np.arange(self.top - self.sequence_length + 1, self.top)
+        sequence[0:self.sequence_length - 1] = self.states.take(indexes, axis=0, mode='wrap')
+
+        # set current states value in sequence
         sequence[-1] = next_state
+
+        # take the same terminal values from the memory
+        terminals = self.terminals.take(indexes, axis=0, mode='wrap')
+        
+        # if any of those terminals are true, then set indexes of the 
+        # sequence up to and including the index to zero
+        true_terminals = np.argwhere(terminals == True)
+        if len(true_terminals) > 0:
+            real_start = true_terminals[-1] + 1
+            sequence[:real_start] = 0
+
         return sequence
 
     def is_full(self):
