@@ -33,9 +33,6 @@ class EpsilonGreedy(Policy):
         if random.random() < self.exploration_prob:
             return random.choice(self.actions)
         else:
-            print q_values
-            print np.argmax(q_values)
-            raw_input()
             return np.argmax(q_values)
 
     def update_parameters(self):
