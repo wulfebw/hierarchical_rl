@@ -97,6 +97,12 @@ class RecurrentQNetwork(object):
         """
         if self.update_counter % self.freeze_interval == 0:
             self.reset_target_network()
+
+        cur_learning_rate = self.sym_learning_rate.get_value()
+        if self.update_counter > 1 and self.update_counter % 5000 == 0 and cur_learning_rate > .00025:
+            self.sym_learning_rate.set_value(cur_learning_rate * .9)
+            print 'new learning rate: {}'.format(self.sym_learning_rate.get_value())
+
         self.update_counter += 1
 
         self.states_shared.set_value(states)
@@ -269,12 +275,14 @@ class RecurrentQNetwork(object):
             raise ValueError("Unrecognized network_type: {}".format(self.network_type))
 
     def initialize_updates(self, update_rule, loss, params, learning_rate):
+        self.sym_learning_rate = theano.shared(learning_rate)
+
         if update_rule == 'adam':
-            updates = lasagne.updates.adam(loss, params, learning_rate)
+            updates = lasagne.updates.adam(loss, params, self.sym_learning_rate)
         elif update_rule == 'rmsprop':
-            updates = lasagne.updates.rmsprop(loss, params, learning_rate)
+            updates = lasagne.updates.rmsprop(loss, params, self.sym_learning_rate)
         elif update_rule == 'sgd+nesterov':
-            updates = lasagne.updates.sgd(loss, params, learning_rate)
+            updates = lasagne.updates.sgd(loss, params, self.sym_learning_rate)
             updates = lasagne.updates.apply_nesterov_momentum(updates)
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))

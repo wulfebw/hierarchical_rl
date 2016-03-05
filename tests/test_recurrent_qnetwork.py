@@ -472,7 +472,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             # (also discounting the walls)
             # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
             max_steps = (2 * room_size * num_rooms) ** 2
-            num_epochs = 100
+            num_epochs = 500
             epoch_length = 1
             test_epoch_length = 0
             epsilon_decay = (num_epochs * epoch_length * max_steps) 
@@ -483,6 +483,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'building replay memory...'
             # want to track at minimum the last 50 episodes
             capacity = max_steps * 50
+            capacity = 100
             rm = replay_memory.SequenceReplayMemory(input_shape=input_shape,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=capacity)
             print 'building logger...'
@@ -506,17 +507,17 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
-        net_types = ['single_layer_lstm', 'stacked_lstm', 'hierarchical_stacked_lstm_with_merge']
+        net_types = ['single_layer_lstm', 'stacked_lstm', 'stacked_lstm_with_merge', 'hierarchical_stacked_lstm_with_merge']
         # net_types = ['hierarchical_stacked_lstm_with_merge']
         for idx in range(50):
-            lr = random.choice([.01, .009, .008, .007, .006, .005]) 
-            fi = random.choice([100, 200, 300, 400, 500])
-            nh = random.choice([4, 8, 12]) 
+            lr = random.choice([.01]) 
+            fi = random.choice([100])
+            nh = random.choice([4]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([4, 7, 10, 13, 16])
-            eps = random.choice([.4, .5])
+            seq_len = random.choice([4, 7, 10, 13])
+            eps = random.choice([.5])
             nt = net_types[idx % len(net_types)]
-            up = random.choice(['sgd+nesterov', 'adam'])
+            up = random.choice(['sgd+nesterov'])
            
             print 'run number: {}'.format(idx)
             print 'learning_rate: {}  frozen_interval: \
