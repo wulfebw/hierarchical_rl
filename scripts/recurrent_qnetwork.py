@@ -99,8 +99,8 @@ class RecurrentQNetwork(object):
             self.reset_target_network()
 
         cur_learning_rate = self.sym_learning_rate.get_value()
-        if self.update_counter > 1 and self.update_counter % 5000 == 0 and cur_learning_rate > .00025:
-            self.sym_learning_rate.set_value(cur_learning_rate * .9)
+        if self.update_counter > 1 and self.update_counter % 2000 == 0 and cur_learning_rate > .00025:
+            self.sym_learning_rate.set_value(np.cast['float32'](cur_learning_rate * .9))
             print 'new learning rate: {}'.format(self.sym_learning_rate.get_value())
 
         self.update_counter += 1
@@ -275,7 +275,7 @@ class RecurrentQNetwork(object):
             raise ValueError("Unrecognized network_type: {}".format(self.network_type))
 
     def initialize_updates(self, update_rule, loss, params, learning_rate):
-        self.sym_learning_rate = theano.shared(learning_rate)
+        self.sym_learning_rate = theano.shared(np.cast['float32'](learning_rate))
 
         if update_rule == 'adam':
             updates = lasagne.updates.adam(loss, params, self.sym_learning_rate)

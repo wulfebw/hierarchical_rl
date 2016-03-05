@@ -472,7 +472,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             # (also discounting the walls)
             # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
             max_steps = (2 * room_size * num_rooms) ** 2
-            num_epochs = 500
+            num_epochs = 200
             epoch_length = 1
             test_epoch_length = 0
             epsilon_decay = (num_epochs * epoch_length * max_steps) 
