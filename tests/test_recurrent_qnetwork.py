@@ -506,24 +506,23 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
-
-        #net_types = ['single_layer_lstm', 'stacked_lstm', 'triple_stacked_lstm']
-        net_types = ['hierarchical_stacked_lstm_with_merge']
+        net_types = ['single_layer_lstm', 'stacked_lstm', 'hierarchical_stacked_lstm_with_merge']
+        # net_types = ['hierarchical_stacked_lstm_with_merge']
         for idx in range(50):
-            lr = random.choice([.01, .009, .008, .007, .006. 005]) 
+            lr = random.choice([.01, .009, .008, .007, .006, .005]) 
             fi = random.choice([100, 200, 300, 400, 500])
             nh = random.choice([4, 8, 12]) 
             reg = random.choice([1e-4]) 
             seq_len = random.choice([4, 7, 10, 13, 16])
             eps = random.choice([.4, .5])
-            nt = random.choice(net_types)
+            nt = net_types[idx % len(net_types)]
             up = random.choice(['sgd+nesterov', 'adam'])
            
             print 'run number: {}'.format(idx)
             print 'learning_rate: {}  frozen_interval: \
             {}  num_hidden: {}  reg: {}  sequence_length: \
             {}  eps: {}  network_type: {}'.format(lr,fi,nh, reg, seq_len, eps, nt)
-            run(lr, fi, nh, reg, seq_len, eps, nt)
+            run(lr, fi, nh, reg, seq_len, eps, nt, up)
 
 if __name__ == '__main__':
     unittest.main()
