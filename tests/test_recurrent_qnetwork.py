@@ -483,7 +483,6 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             print 'building replay memory...'
             # want to track at minimum the last 50 episodes
             capacity = max_steps * 50
-            capacity = 100
             rm = replay_memory.SequenceReplayMemory(input_shape=input_shape,
                     sequence_length=sequence_length, batch_size=batch_size, capacity=capacity)
             print 'building logger...'
