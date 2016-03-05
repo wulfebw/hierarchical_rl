@@ -134,6 +134,33 @@ class TestExperimentMazeSolving(TestExperiment):
         self.assertTrue(actual_total < expected_total_max)
         self.assertTrue(actual_total > expected_total_min)
 
+    def test_run_with_standard_maze_mdp_q_learning_agent_correct_V(self):
+        mdp = mdps.MazeMDP(5, 2)
+        mdp.compute_states()
+        mdp.EXIT_REWARD = 1
+        mdp.MOVE_REWARD = -0.01
+        num_actions = len(mdp.get_actions(None))
+        discount = 1
+        exploration_prob = .5
+        step_size = .1
+        a = agent.QLearningAgent(num_actions=num_actions, discount=discount, exploration_prob=exploration_prob, step_size=step_size, logging=False)
+        num_epochs = 10
+        epoch_length = 200
+        test_epoch_length = 0
+        max_steps = 300
+        run_tests = False
+        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests)
+        e.run()
+
+        V = get_V(e)
+        actual_total = 0
+        for k, v in V.iteritems():
+            actual_total += v
+        expected_total_min = -110
+        expected_total_max = -40
+        self.assertTrue(actual_total < expected_total_max)
+        self.assertTrue(actual_total > expected_total_min)
+
 class TestExperimentValueString(TestExperiment):
 
     def test_sequence_value_string(self):

@@ -66,7 +66,7 @@ class testLoggerGraphing(unittest.TestCase):
         test_epoch_length = 0
         max_steps = 1000
         run_tests = False
-        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests)
+        e = experiment.Experiment(mdp, a, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, False)
         e.run()
 
         log_dir = e.agent.logger.log_dir

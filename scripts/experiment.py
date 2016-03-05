@@ -10,7 +10,8 @@ class Experiment(object):
     :description: Experiment is a class representing an online reinforcement learning experiment. This class orchestrates the interaction between an agent and an mdp.
     """
 
-    def __init__(self, mdp, agent, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, value_logging=False):
+    def __init__(self, mdp, agent, num_epochs, epoch_length, test_epoch_length, max_steps, run_tests, 
+        value_logging=False):
         """
         :type mdp: object inheriting from MDP
         :param mdp: the markov decision process in which the agent acts
@@ -59,6 +60,8 @@ class Experiment(object):
                 self.agent.start_testing()
                 self.run_epoch(self.test_epoch_length)
                 self.agent.finish_testing(epoch)
+
+        self.finish_experiement(epoch)
 
     def run_epoch(self, epoch, epoch_length):
         """
@@ -117,7 +120,7 @@ class Experiment(object):
         """
         :description: finalize epoch
         """
-        if self.value_logging:
+        if self.value_logging and self.agent.replay_memory.is_full():
             self.log_value_string()
             # if epoch > 3:
             #     self.log_trajectories()
@@ -136,4 +139,5 @@ class Experiment(object):
         value_string = self.mdp.get_value_string(V)
         self.agent.logger.log_value_string(value_string)
         self.agent.logger.log_values(V)
+
 

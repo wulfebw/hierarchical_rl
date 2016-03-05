@@ -108,24 +108,35 @@ class RecurrentQNetwork(object):
         loss, q_values = self._train()
         return loss
 
-    def get_q_values(self, state):
+    def get_q_values(self, sequence):
         """
-        :description: Returns the q_values associated with a single state for the purposes of 
-                        deciding which action to take.
+        :description: Returns the q_values resultant from forward propagating
+                        through all timesteps in the passed in sequence
 
-        :type state: np.array(dtype=theano.config.floatX)
-        :param state: state to compute q_values for, shape = (D,)
-
-        :example call:
-        state = np.array([[1,2],[1,3]])
-        network.get_q_values(state)
+        :type sequence: np.array(dtype=theano.config.floatX)
+        :param sequence: sequence of states to compute q values for
+                        shape = (1, sequence_length, D)
         """
-        if len(state.shape) < 2 or state.shape[-1] != self.input_shape \
-                                or state.shape[-2] != self.sequence_length:
-            raise ValueError('invalid state passed to get_q_values. State: {}, shape: {}'.format(state, state.shape))
+        # this method should only be called within agent.get_action
+        if len(sequence.shape) < 2 or sequence.shape[-1] != self.input_shape \
+                                or sequence.shape[-2] != self.sequence_length:
+            raise ValueError('invalid sequence passed to get_q_values. State: {}, shape: {}'.format(sequence, sequence.shape))
 
         states = np.zeros((1, self.sequence_length, self.input_shape), dtype=theano.config.floatX)
-        states[0, :, :] = state
+        states[0, :, :] = sequence
+        self.states_shared.set_value(states)
+        q_values = self._get_q_values()[0]
+        return q_values
+
+    def get_logging_q_values(self, state):
+        # this method should only be called within agent.get_q_values
+        # or more generally with a single timestep of the state
+        if len(state.shape) > 1 or state.shape[0] != self.input_shape:
+            raise ValueError('invalid state passed to get_logging_q_values. \
+                    State: {}, shape: {}'.format(state, state.shape))
+
+        states = np.zeros((1, 1, self.input_shape), dtype=theano.config.floatX)
+        states[0, 0, :] = state
         self.states_shared.set_value(states)
         q_values = self._get_q_values()[0]
         return q_values
@@ -262,7 +273,7 @@ class RecurrentQNetwork(object):
             updates = lasagne.updates.adam(loss, params, learning_rate)
         elif update_rule == 'rmsprop':
             updates = lasagne.updates.rmsprop(loss, params, learning_rate)
-        elif update_rule == 'sgd':
+        elif update_rule == 'sgd+nesterov':
             updates = lasagne.updates.sgd(loss, params, learning_rate)
             updates = lasagne.updates.apply_nesterov_momentum(updates)
         else:
@@ -576,6 +587,13 @@ class RecurrentQNetwork(object):
 
     def build_hierachical_stacked_lstm_network_with_merge(self, input_shape, sequence_length, batch_size, output_shape):
 
+        assert sequence_length % 3 == 1, """when using the hierarchical_stacked_lstm_with_merge, 
+                the sequence length must be such that sequence_length % 3 == 1 because 
+                this allows for taking the slice of a length 1 sequence while still 
+                keeping at least one element and simultaneously allowing for any 
+                slice made to incorporate the last element of the original sequence. 
+                If you dont like this, you can change it easily by using a mask but im lazy."""
+
         l_in = lasagne.layers.InputLayer(
             shape=(batch_size, sequence_length, input_shape),
             name='l_in'
@@ -600,7 +618,7 @@ class RecurrentQNetwork(object):
             name='l_lstm1'
         )
 
-        l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(1, sequence_length + 1, 2), 1, name='l_slice1_up')
+        l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(0, sequence_length, 3), 1, name='l_slice1_up')
 
         l_lstm2 = lasagne.layers.LSTMLayer(
             l_slice1_up, 

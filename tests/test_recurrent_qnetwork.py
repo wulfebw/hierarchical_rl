@@ -439,6 +439,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
         def run(learning_rate, freeze_interval, num_hidden, reg, seq_len, eps, nt):
             room_size = 5
             num_rooms = 2
+            input_shape = 2 * room_size + num_rooms ** 2
             print 'building mdp...'
             mdp = mdps.MazeMDP(room_size, num_rooms)
             mdp.compute_states()
@@ -449,27 +450,42 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             sequence_length = seq_len
             num_actions = len(mdp.get_actions(None))
             batch_size = 100
+            update_rule = 'sgd+nesterov'
             print 'building network...'
-            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=2 * room_size + num_rooms ** 2, 
+            network = recurrent_qnetwork.RecurrentQNetwork(input_shape=input_shape, 
                         sequence_length=sequence_length, batch_size=batch_size, 
                         num_actions=4, num_hidden=num_hidden, discount=discount, 
                         learning_rate=learning_rate, regularization=reg, 
-                        update_rule='adam', freeze_interval=freeze_interval, 
+                        update_rule=update_rule, freeze_interval=freeze_interval, 
                         network_type=network_type, rng=None)            
-            num_epochs = 50
+
+            # take this many steps because (very loosely):
+            # let l be the step length
+            # let d be the difference in start and end locations
+            # let N be the number of steps for the agent to travel a distance d
+            # then N ~ (d/l)^2  // assuming this is a random walk
+            # with l = 1, this gives d^2 in order to make it N steps away
+            # the desired distance here is to walk along both dimensions of the maze
+            # which is equal to two times the num_rooms * room_size
+            # so squaring that gives a loose approximation to the number of 
+            # steps needed (discounting that this is actually a lattice (does it really matter?))
+            # (also discounting the walls)
+            # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
+            max_steps = (2 * room_size * num_rooms) ** 2
+            num_epochs = 100
             epoch_length = 1
             test_epoch_length = 0
-            max_steps = 4 * (room_size * num_rooms) ** 2
             epsilon_decay = (num_epochs * epoch_length * max_steps) 
             print 'building adapter...'
-            # adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
-            # adapter = state_adapters.CoordinatesToRowColAdapter(room_size=room_size, num_rooms=num_rooms)
             adapter = state_adapters.CoordinatesToRowColRoomAdapter(room_size=room_size, num_rooms=num_rooms)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
-            rm = replay_memory.SequenceReplayMemory(input_shape=2 * room_size + num_rooms ** 2,
-                    sequence_length=sequence_length, batch_size=batch_size, capacity=100000)
+            # want to track at minimum the last 50 episodes
+            capacity = max_steps * 50
+            capacity = 100
+            rm = replay_memory.SequenceReplayMemory(input_shape=input_shape,
+                    sequence_length=sequence_length, batch_size=batch_size, capacity=capacity)
             print 'building logger...'
             log = logger.NeuralLogger(agent_name=network_type)
             print 'building agent...'
@@ -499,7 +515,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             fi = random.choice([100, 200, 300])
             nh = random.choice([8]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([8])
+            seq_len = random.choice([4, 7, 10, 13, 16])
             eps = random.choice([.4, .5])
             nt = random.choice(net_types)
            

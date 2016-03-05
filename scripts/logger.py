@@ -59,9 +59,13 @@ class Logger(object):
         self.log_dir = None
         self.logging = logging
         self.verbose = verbose
+        self.steps = 0
+        self.prev_steps = 0
+        self.episode_steps = []
 
 
     def log_action(self, action):
+        self.steps += 1
         self.actions.append(action)
 
     def log_reward(self, reward):
@@ -101,13 +105,16 @@ class Logger(object):
 
     def finish_episode(self):
         """
-        :description: performs tasks associated with the ending of an epidoe
+        :description: performs tasks associated with the ending of an episode
         """
         self.episode_rewards.append(np.sum(self.rewards))
         self.rewards = []
 
         self.episode_actions.append(self.actions[self.action_start:])
         self.action_start = len(self.actions)
+
+        self.episode_steps.append(self.steps - self.prev_steps)
+        self.prev_steps = self.steps
 
     def record_stat(self, name, values, epoch):
         """
@@ -265,10 +272,15 @@ class NeuralLogger(Logger):
 
         try:    
             self.record_stat('actions', self.actions, epoch)
-            self.record_stat('rewards', self.episode_rewards, epoch)
+            self.record_stat('episode_rewards', self.episode_rewards, epoch)
             self.record_stat('losses', self.losses, epoch)
+            self.record_stat('episode_steps', self.episode_steps, epoch)
+            
             if self.verbose:
-                print 'losses: {}\tepoch: {}'.format(np.mean(self.losses), epoch)
+                print '\nEpoch: {}'.format(epoch)
+                print 'Steps in last episode: {}'.format(self.episode_steps[-1])
+                if len(self.losses) > 0:
+                    print 'Losses: {}'.format(np.mean(self.losses[-self.episode_steps[-1]:]))
 
             self.record_weights(epoch, network)
             self.record_policy(epoch, policy)
@@ -332,8 +344,10 @@ class NeuralLogger(Logger):
         hyperparameters['replay_memory_capacity'] = replay_memory.capacity
         hyperparameters['actions_until_min'] = policy.actions_until_min
         hyperparameters['epsilon'] = policy.exploration_prob
-        # hyperparameters['network_type'] = network.network_type
-        # hyperparameters['sequence_length'] = replay_memory.sequence_length
+        if hasattr(network, 'network_type'):
+            hyperparameters['network_type'] = network.network_type
+        if hasattr(replay_memory, 'sequence_length'):
+            hyperparameters['sequence_length'] = replay_memory.sequence_length
 
         with open(filepath, 'wb') as f:
             for k, v in hyperparameters.iteritems():

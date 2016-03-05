@@ -225,7 +225,7 @@ class NeuralAgent(Agent):
         :description: collects a minibatch of experiences and passes them to the network to train
         """
         # wait until replay memory has samples
-        if not self.replay_memory.is_ready_to_sample():
+        if not self.replay_memory.is_full():
             return
 
         # collect minibatch
@@ -336,7 +336,7 @@ class RecurrentNeuralAgent(Agent):
         :description: collects a minibatch of experiences and passes them to the network to train
         """
         # wait until replay memory has samples
-        if not self.replay_memory.is_ready_to_sample():
+        if not self.replay_memory.is_full():
             return
 
         # collect minibatch
@@ -353,9 +353,8 @@ class RecurrentNeuralAgent(Agent):
         :type state: numpy array
         :param state: the state used to determine the action
         """
-        print 'get action'
         # wait until agent starts learning to use network to decide action
-        if not self.replay_memory.is_ready_to_sample():
+        if not self.replay_memory.is_full():
             return self.policy.random_action()
 
         sequence = self.replay_memory.make_last_sequence(state)
@@ -392,11 +391,7 @@ class RecurrentNeuralAgent(Agent):
         """
         :description: returns the q values associated with a given state. Used for printing out a representation of the mdp with the values included. 
         """
-        print 'get_q_values'
         state = self.state_adapter.convert_state_to_agent_format(state)
-        # formulate as sequence so that network will just propogate through the full thing
-        sequence = np.zeros((1, self.network.sequence_length, self.network.input_shape), dtype=theano.config.floatX)
-        sequence[0, -1, :] = state
-        q_values = self.network.get_q_values(sequence)
+        q_values = self.network.get_logging_q_values(state)
         return q_values
         

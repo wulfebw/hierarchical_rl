@@ -1,33 +1,17 @@
+
 import lasagne
+from lasagne.regularization import regularize_network_params, l2
 import numpy as np
 import os
 import random
-import shutil
 import sys
 import theano
 import theano.tensor as T
 import unittest
-import lasagne
-from lasagne.regularization import regularize_network_params, l2
-import numpy as np
-import theano
-import theano.tensor as T
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'scripts')))
 
-import agent
-import aws_s3_utility
-import experiment
-import file_utils
-import learning_utils
-import logger
-import mdps
-import policy
-import recurrent_qnetwork
-import replay_memory
-import state_adapters
-
-def build_hierachical_stacked_lstm_network_with_merge(input_shape, sequence_length, batch_size, output_shape):
+def build_hierachical_stacked_lstm_network_with_merge(input_shape, sequence_length, batch_size, output_shape, start=1, downsample=2):
 
     l_in = lasagne.layers.InputLayer(
         shape=(batch_size, sequence_length, input_shape)
@@ -52,7 +36,7 @@ def build_hierachical_stacked_lstm_network_with_merge(input_shape, sequence_leng
     )
 
     # does this slice out the correct values?
-    l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(1, sequence_length + 1, 2), 1)
+    l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(start, sequence_length, downsample), 1)
 
     l_lstm2 = lasagne.layers.LSTMLayer(
         l_slice1_up, 
@@ -82,8 +66,8 @@ class TestBuildHierarchicalStackedLSTMWithMerge(unittest.TestCase):
 
     def test_build_hierachical_stacked_lstm_network_with_merge_correct_slice(self):
         input_shape = 14
-        sequence_length = 12
-        batch_size = 100
+        sequence_length = 4
+        batch_size = 1
         _, l_lstm, l_slice = build_hierachical_stacked_lstm_network_with_merge(
                                     input_shape=input_shape,
                                     sequence_length=sequence_length,
@@ -97,8 +81,93 @@ class TestBuildHierarchicalStackedLSTMWithMerge(unittest.TestCase):
         sample_states = np.zeros((batch_size, sequence_length, input_shape))
         sample_lstm_out, sample_slice_out = run(sample_states)
 
+        self.assertEquals(sample_lstm_out[:, 1::2, :].tolist(), sample_slice_out.tolist())
 
-        self.assertEquals(sample_lstm_out[:, 1::2, :], sample_slice_out)
+    def test_build_hierachical_stacked_lstm_network_with_merge_correct_slice_short_seq(self):
+        input_shape = 14
+        sequence_length = 2
+        batch_size = 1
+        _, l_lstm, l_slice = build_hierachical_stacked_lstm_network_with_merge(
+                                    input_shape=input_shape,
+                                    sequence_length=sequence_length,
+                                    batch_size=batch_size,
+                                    output_shape=4)
+
+        states = T.tensor3('states')
+        lstm_out = lasagne.layers.get_output(l_lstm, states)
+        slice_out = lasagne.layers.get_output(l_slice, states)
+        run = theano.function([states], [lstm_out, slice_out])
+        sample_states = np.zeros((batch_size, sequence_length, input_shape))
+        sample_lstm_out, sample_slice_out = run(sample_states)
+
+        self.assertEquals(sample_lstm_out[:, 1::2, :].tolist(), sample_slice_out.tolist())
+
+
+    def test_build_hierachical_stacked_lstm_network_with_merge_correct_slice_len_1_seq(self):
+        input_shape = 14
+        sequence_length = 1
+        batch_size = 1
+        l_out, l_lstm, l_slice = build_hierachical_stacked_lstm_network_with_merge(
+                                    input_shape=input_shape,
+                                    sequence_length=sequence_length,
+                                    batch_size=batch_size,
+                                    output_shape=4,
+                                    start=0,
+                                    downsample=3)
+
+        states = T.tensor3('states')
+        l_out_out = lasagne.layers.get_output(l_out, states)
+        lstm_out = lasagne.layers.get_output(l_lstm, states)
+        slice_out = lasagne.layers.get_output(l_slice, states)
+        run = theano.function([states], [l_out_out, lstm_out, slice_out])
+        sample_states = np.zeros((batch_size, sequence_length, input_shape))
+        sample_out, sample_lstm_out, sample_slice_out = run(sample_states)
+
+        self.assertEquals(sample_lstm_out[:, 0::3, :].tolist(), sample_slice_out.tolist())
+
+    def test_build_hierachical_stacked_lstm_network_with_merge_correct_slice_longer_len_seq(self):
+        input_shape = 14
+        sequence_length = 7
+        batch_size = 1
+        l_out, l_lstm, l_slice = build_hierachical_stacked_lstm_network_with_merge(
+                                    input_shape=input_shape,
+                                    sequence_length=sequence_length,
+                                    batch_size=batch_size,
+                                    output_shape=4,
+                                    start=0,
+                                    downsample=3)
+
+        states = T.tensor3('states')
+        l_out_out = lasagne.layers.get_output(l_out, states)
+        lstm_out = lasagne.layers.get_output(l_lstm, states)
+        slice_out = lasagne.layers.get_output(l_slice, states)
+        run = theano.function([states], [l_out_out, lstm_out, slice_out])
+        sample_states = np.zeros((batch_size, sequence_length, input_shape))
+        sample_out, sample_lstm_out, sample_slice_out = run(sample_states)
+
+        self.assertEquals(sample_lstm_out[:, 0::3, :].tolist(), sample_slice_out.tolist())
+
+    def test_build_hierachical_stacked_lstm_network_with_merge_correct_slice_shared_var(self):
+        input_shape = 14
+        sequence_length = 1
+        batch_size = 1
+        _, l_lstm, l_slice = build_hierachical_stacked_lstm_network_with_merge(
+                                    input_shape=input_shape,
+                                    sequence_length=sequence_length,
+                                    batch_size=batch_size,
+                                    output_shape=4)
+
+        states = T.tensor3('states')
+        lstm_out = lasagne.layers.get_output(l_lstm, states)
+        slice_out = lasagne.layers.get_output(l_slice, states)
+
+        states_shared = theano.shared(np.zeros((batch_size, sequence_length, input_shape)))
+        run = theano.function([], [lstm_out, slice_out], givens={states: states_shared})
+        sample_states = np.zeros((batch_size, sequence_length, input_shape))
+        states_shared.set_value(sample_states)
+        sample_lstm_out, sample_slice_out = run()
+
+        self.assertEquals(sample_lstm_out[:, 1::2, :].tolist(), sample_slice_out.tolist())
 
         
 if __name__ == '__main__':

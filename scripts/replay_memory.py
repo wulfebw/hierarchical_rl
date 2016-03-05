@@ -4,7 +4,6 @@ import random
 import theano
 
 DEFAULT_CAPACITY = 10000
-SAMPLING_CAPACITY_FACTOR = 100.
 
 class ReplayMemory(object):
 
@@ -30,12 +29,6 @@ class ReplayMemory(object):
 
     def is_empty(self):
         return self.first_index == -1
-
-    def is_ready_to_sample(self):
-        """
-        :description: is the replay memory ready to sample from
-        """
-        return self.last_index + 1 - self.first_index >= self.capacity / SAMPLING_CAPACITY_FACTOR
 
     def discard_sample(self):
         rand_index = random.randint(self.first_index, self.last_index)
@@ -184,19 +177,13 @@ class SequenceReplayMemory(object):
         """
         return self.size == self.capacity
 
-    def is_ready_to_sample(self):
-        """
-        :description: is the replay memory ready to sample from
-        """
-        return self.size >= self.capacity / SAMPLING_CAPACITY_FACTOR
-
     def sample_batch(self):
         """
         :description: sample a minibatch of data
         """
 
         # must insert sufficient data into replay memory before sampling
-        if not self.is_ready_to_sample():
+        if not self.is_full():
             raise Exception('Unable to sample from replay memory when empty')
 
         # allocate batch containers

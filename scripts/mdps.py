@@ -129,6 +129,7 @@ class MazeMDP(MDP):
 
     EXIT_REWARD = 1
     MOVE_REWARD = -0.01
+    TRUE_START_STATE_VALUE = 0.83
 
     def __init__(self, room_size, num_rooms):
         self.room_size = room_size
