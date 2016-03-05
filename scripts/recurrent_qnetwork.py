@@ -120,22 +120,13 @@ class RecurrentQNetwork(object):
         state = np.array([[1,2],[1,3]])
         network.get_q_values(state)
         """
-        if state.shape == (self.sequence_length, self.input_shape) or \
-                        state.shape == (1, self.sequence_length, self.input_shape):
-            states = np.zeros((1, self.sequence_length, self.input_shape),  \
-                dtype=theano.config.floatX)
-            states[0, :, :] = state
-        elif state.shape == (self.input_shape, ) or \
-                        state.shape == (1, self.input_shape) or \
-                        state.shape == (1, 1, self.input_shape):
-            # default sequence length to 2 to enable slicing inside the network
-            states = np.zeros((1, 2, self.input_shape), dtype=theano.config.floatX)
-            states[0, 0, :] = state
-        else:
-            raise ValueError('invalid state passed to get_q_values. State: {}, \
-                shape: {}'.format(state, state.shape))
-        self.states_shared.set_value(states)
+        if len(state.shape) < 2 or state.shape[-1] != self.input_shape \
+                                or state.shape[-2] != self.sequence_length:
+            raise ValueError('invalid state passed to get_q_values. State: {}, shape: {}'.format(state, state.shape))
 
+        states = np.zeros((1, self.sequence_length, self.input_shape), dtype=theano.config.floatX)
+        states[0, :, :] = state
+        self.states_shared.set_value(states)
         q_values = self._get_q_values()[0]
         return q_values
 
