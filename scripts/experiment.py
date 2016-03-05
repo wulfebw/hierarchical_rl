@@ -61,8 +61,6 @@ class Experiment(object):
                 self.run_epoch(self.test_epoch_length)
                 self.agent.finish_testing(epoch)
 
-        self.finish_experiement(epoch)
-
     def run_epoch(self, epoch, epoch_length):
         """
         :description: runs a single epoch
