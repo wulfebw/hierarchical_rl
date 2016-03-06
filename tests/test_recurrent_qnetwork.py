@@ -472,7 +472,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             # (also discounting the walls)
             # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
             max_steps = (2 * room_size * num_rooms) ** 2
-            num_epochs = 200
+            num_epochs = 250
             epoch_length = 1
             test_epoch_length = 0
             epsilon_decay = (num_epochs * epoch_length * max_steps) 
@@ -499,7 +499,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             
             ak = file_utils.load_key('../access_key.key')
             sk = file_utils.load_key('../secret_key.key')
-            bucket = 'hierarchical'
+            bucket = 'hierarchical2'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
                 aws_util.upload_directory(e.agent.logger.log_dir)
@@ -513,7 +513,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             fi = random.choice([100])
             nh = random.choice([4]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([4, 7, 10, 13])
+            seq_len = random.choice([7])
             eps = random.choice([.5])
             nt = net_types[idx % len(net_types)]
             up = random.choice(['sgd+nesterov'])

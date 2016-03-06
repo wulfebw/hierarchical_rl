@@ -98,10 +98,10 @@ class RecurrentQNetwork(object):
         if self.update_counter % self.freeze_interval == 0:
             self.reset_target_network()
 
-        cur_learning_rate = self.sym_learning_rate.get_value()
-        if self.update_counter > 1 and self.update_counter % 2000 == 0 and cur_learning_rate > .00025:
-            self.sym_learning_rate.set_value(np.cast['float32'](cur_learning_rate * .9))
-            print 'new learning rate: {}'.format(self.sym_learning_rate.get_value())
+        # cur_learning_rate = self.sym_learning_rate.get_value()
+        # if self.update_counter > 1 and self.update_counter % 10000 == 0 and cur_learning_rate > .0001:
+        #     self.sym_learning_rate.set_value(np.cast['float32'](cur_learning_rate * .9))
+        #     print 'new learning rate: {}'.format(self.sym_learning_rate.get_value())
 
         self.update_counter += 1
 
@@ -283,7 +283,7 @@ class RecurrentQNetwork(object):
             updates = lasagne.updates.rmsprop(loss, params, self.sym_learning_rate)
         elif update_rule == 'sgd+nesterov':
             updates = lasagne.updates.sgd(loss, params, self.sym_learning_rate)
-            updates = lasagne.updates.apply_nesterov_momentum(updates)
+            updates = lasagne.updates.apply_nesterov_momentum(updates, momentum=.8)
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))
         return updates
