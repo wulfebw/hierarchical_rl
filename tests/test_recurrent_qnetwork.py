@@ -475,7 +475,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             num_epochs = 500
             epoch_length = 1
             test_epoch_length = 0
-            epsilon_decay = (num_epochs * epoch_length * max_steps) 
+            epsilon_decay = (num_epochs * epoch_length * max_steps) / 4
             print 'building adapter...'
             adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size, num_rooms=num_rooms)
             print 'building policy...'
