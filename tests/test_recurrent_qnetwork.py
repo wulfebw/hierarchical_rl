@@ -472,12 +472,12 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             # (also discounting the walls)
             # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
             max_steps = (2 * room_size * num_rooms) ** 2
-            num_epochs = 500
+            num_epochs = 350
             epoch_length = 1
             test_epoch_length = 0
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 4
             print 'building adapter...'
-            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size, num_rooms=num_rooms)
+            adapter = state_adapters.CoordinatesToSingleRoomRowColAdapter(room_size=room_size)
             print 'building policy...'
             p = policy.EpsilonGreedy(num_actions, eps, 0.05, epsilon_decay)
             print 'building replay memory...'
@@ -499,7 +499,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             
             ak = file_utils.load_key('../access_key.key')
             sk = file_utils.load_key('../secret_key.key')
-            bucket = 'hierarchical6'
+            bucket = 'hierarchical8'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
                 aws_util.upload_directory(e.agent.logger.log_dir)
@@ -511,7 +511,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
         for idx in range(50):
             lr = random.choice([.01]) 
             fi = random.choice([100])
-            nh = random.choice([4]) 
+            nh = random.choice([64]) 
             reg = random.choice([1e-4]) 
             seq_len = random.choice([13])
             eps = random.choice([.5])
