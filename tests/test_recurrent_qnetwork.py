@@ -472,7 +472,7 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             # (also discounting the walls)
             # see: http://mathworld.wolfram.com/RandomWalk2-Dimensional.html
             max_steps = (2 * room_size * num_rooms) ** 2
-            num_epochs = 350
+            num_epochs = 500
             epoch_length = 1
             test_epoch_length = 0
             epsilon_decay = (num_epochs * epoch_length * max_steps) / 4
@@ -499,21 +499,21 @@ class TestRecurrentQNetworkFullOperationFlattnedState(unittest.TestCase):
             
             ak = file_utils.load_key('../access_key.key')
             sk = file_utils.load_key('../secret_key.key')
-            bucket = 'hierarchical8'
+            bucket = 'hierarchical9'
             try:
                 aws_util = aws_s3_utility.S3Utility(ak, sk, bucket)
                 aws_util.upload_directory(e.agent.logger.log_dir)
             except Exception as e:
                 print 'error uploading to s3: {}'.format(e)
 
-        net_types = ['single_layer_lstm', 'stacked_lstm', 'stacked_lstm_with_merge', 'hierarchical_stacked_lstm_with_merge']
-        # net_types = ['hierarchical_stacked_lstm_with_merge']
-        for idx in range(50):
+        # net_types = ['single_layer_lstm', 'stacked_lstm', 'stacked_lstm_with_merge', 'hierarchical_stacked_lstm_with_merge']
+        net_types = ['connected_clockwork_lstm', 'disconnected_clockwork_lstm']
+        for idx in range(10):
             lr = random.choice([.01]) 
             fi = random.choice([100])
             nh = random.choice([64]) 
             reg = random.choice([1e-4]) 
-            seq_len = random.choice([13])
+            seq_len = random.choice([16])
             eps = random.choice([.5])
             nt = net_types[idx % len(net_types)]
             up = random.choice(['sgd+nesterov'])

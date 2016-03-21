@@ -11,7 +11,7 @@ import time
 import learning_utils
 
 # threading constants
-NUM_THREADS = 8
+NUM_THREADS = 2
 
 # global variables for AsyncSarsa
 WEIGHTS = collections.defaultdict(lambda: 0)
@@ -119,7 +119,7 @@ class MazeMDP(object):
     def print_state_values(self):
         V = {}
         for state in self.states:
-            # state_value = max(WEIGHTS[(state, action)] for action in self.ACTIONS)
+            #state_value = max(WEIGHTS[(state, action)] for action in self.ACTIONS)
             state_value = VALUE_WEIGHTS[(state, None)]
             V[state] = state_value
 
@@ -261,8 +261,9 @@ class AsyncAdvantageActorCritic(object):
 
     def get_action(self, state):
         self.num_iters += 1
-        if self.tau > 1e-9:
-            self.tau *= .9999
+        # if self.tau > 1e-9:
+        #     self.tau *= .9999
+        #     print self.tau
 
         q_values = np.array([self.getQ(state, action) for action in self.actions])
         exp_q_values = np.exp(q_values / (self.tau + 1e-2))
@@ -299,20 +300,25 @@ def plot_values(values, ylabel):
     plt.show()
 
 def run():
+    start = time.time()
     room_size = 5
-    num_rooms = 10
+    num_rooms = 2
     mdp = MazeMDP(room_size=room_size, num_rooms=num_rooms)
     # agent = AsyncSarsa(actions=mdp.ACTIONS, discount=mdp.DISCOUNT, 
     #             exploration_prob=0.3, learning_rate=.5)
     agent = AsyncAdvantageActorCritic(actions=mdp.ACTIONS, discount=mdp.DISCOUNT, 
                 tau=.3, learning_rate=.5)
     max_steps = (2 * room_size * num_rooms) ** 2
-    experiment = Experiment(mdp=mdp, agent=agent, num_episodes=200, max_steps=max_steps)
+    experiment = Experiment(mdp=mdp, agent=agent, num_episodes=800, max_steps=max_steps)
     multiexperiment = MultithreadedExperiment(experiment=experiment, num_agents=NUM_THREADS)
     multiexperiment.run()
+    end = time.time()
+    print 'took {} seconds'.format(end - start)
     mdp.print_state_values()
     plot_values(REWARDS, 'rewards')
     plot_values(START_STATE_VALUES, 'start state value')
+
+
 
 if __name__ =='__main__':
     run()

@@ -269,6 +269,11 @@ class RecurrentQNetwork(object):
             return self.build_stacked_lstm_network_with_merge
         elif self.network_type == 'hierarchical_stacked_lstm_with_merge':
             return self.build_hierachical_stacked_lstm_network_with_merge
+        elif self.network_type == 'connected_clockwork_lstm':
+            return self.build_connected_clockwork_lstm
+        elif self.network_type == 'disconnected_clockwork_lstm':
+            return self.build_disconnected_clockwork_lstm
+
         elif self.network_type == 'linear_rnn':
             return self.build_linear_rnn_network
         else:
@@ -645,6 +650,142 @@ class RecurrentQNetwork(object):
         l_merge = lasagne.layers.ConcatLayer([l_slice1_out, l_lstm2], name='l_merge')
         l_out = lasagne.layers.DenseLayer(
             l_merge,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0),
+            name='l_out'
+        )
+
+        return l_out
+
+    def build_connected_clockwork_lstm(self, input_shape, sequence_length, batch_size, output_shape):
+
+        assert sequence_length % 3 == 1, """when using the hierarchical_stacked_lstm_with_merge, 
+                the sequence length must be such that sequence_length % 3 == 1 because 
+                this allows for taking the slice of a length 1 sequence while still 
+                keeping at least one element and simultaneously allowing for any 
+                slice made to incorporate the last element of the original sequence. 
+                If you dont like this, you can change it easily by using a mask but im lazy."""
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape),
+            name='l_in'
+        )
+
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(5.))
+        l_lstm1 = lasagne.layers.LSTMLayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=False,
+            name='l_lstm1'
+        )
+        l_slice1_up = lasagne.layers.SliceLayer(l_lstm1, slice(0, sequence_length, 3), 1, name='l_slice1_up')
+
+        l_slice1_in = lasagne.layers.SliceLayer(l_in, slice(0, sequence_length, 3), 1, name='l_slice1_in')
+        l_rnn1 = lasagne.layers.RecurrentLayer(
+            l_slice1_in,
+            num_units=self.num_hidden,
+            W_in_to_hid=lasagne.init.HeNormal(),
+            W_hid_to_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.),
+            nonlinearity=None,
+            grad_clipping=2,
+            only_return_final=False,
+            name='rnn1'
+        )
+
+        
+        l_merge_up = lasagne.layers.ConcatLayer([l_rnn1, l_slice1_up], name='l_merge_up')
+        l_lstm2 = lasagne.layers.LSTMLayer(
+            l_merge_up, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=True,
+            name='l_lstm2'
+        )
+
+        l_slice1_out = lasagne.layers.SliceLayer(l_merge_up, -1, 1, name='l_slice1_out')
+        l_merge_out = lasagne.layers.ConcatLayer([l_slice1_out, l_lstm2], name='l_merge_out')
+
+        l_out = lasagne.layers.DenseLayer(
+            l_merge_out,
+            num_units=output_shape,
+            nonlinearity=None,
+            W=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0),
+            name='l_out'
+        )
+
+        return l_out
+
+    def build_disconnected_clockwork_lstm(self, input_shape, sequence_length, batch_size, output_shape):
+
+        assert sequence_length % 3 == 1, """when using the hierarchical_stacked_lstm_with_merge, 
+                the sequence length must be such that sequence_length % 3 == 1 because 
+                this allows for taking the slice of a length 1 sequence while still 
+                keeping at least one element and simultaneously allowing for any 
+                slice made to incorporate the last element of the original sequence. 
+                If you dont like this, you can change it easily by using a mask but im lazy."""
+
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, sequence_length, input_shape),
+            name='l_in'
+        )
+
+        default_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(0.))
+        forget_gate = lasagne.layers.recurrent.Gate(
+            W_in=lasagne.init.HeNormal(), W_hid=lasagne.init.HeNormal(),
+            b=lasagne.init.Constant(5.))
+        l_lstm1 = lasagne.layers.LSTMLayer(
+            l_in, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=True,
+            name='l_lstm1'
+        )
+
+        l_slice1_in = lasagne.layers.SliceLayer(l_in, slice(0, sequence_length, 3), 1, name='l_slice1_in')
+        l_lstm2 = lasagne.layers.LSTMLayer(
+            l_slice1_in, 
+            num_units=self.num_hidden, 
+            nonlinearity=lasagne.nonlinearities.tanh,
+            cell=default_gate,
+            ingate=default_gate,
+            outgate=default_gate,
+            forgetgate=forget_gate,
+            grad_clipping=2,
+            only_return_final=True,
+            name='l_lstm2'
+        )
+
+        l_merge_out = lasagne.layers.ConcatLayer([l_lstm1, l_lstm2], name='l_merge_out')
+
+        l_out = lasagne.layers.DenseLayer(
+            l_merge_out,
             num_units=output_shape,
             nonlinearity=None,
             W=lasagne.init.HeNormal(),
