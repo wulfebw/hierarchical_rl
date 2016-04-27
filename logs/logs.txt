@@ -1,1 +1,0 @@
-log files will be generated and stored in this directory
